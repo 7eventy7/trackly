@@ -1,6 +1,6 @@
 # <img src="icons/trackly.png" alt="Trackly Logo" width="32" height="32" style="vertical-align: middle"> Trackly
 
-> Track your favorite artists' new releases with Discord notifications 🎵
+> Track your favorite artists' new releases with Discord notifications
 
 Trackly is a Docker container that monitors your music library and notifies you about new releases from your favorite artists via Discord webhooks. The application scans a specified music directory for artist folders and tracks new releases using the Discogs API.
 
