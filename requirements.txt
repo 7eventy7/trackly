@@ -1,5 +1,5 @@
 python-dotenv==1.0.0
-python-discogs-client==2.7
+python3-discogs-client>=2.0.0
 requests==2.31.0
 schedule==1.2.1
 watchdog==3.0.0
