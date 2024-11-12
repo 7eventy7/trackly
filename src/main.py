@@ -26,18 +26,20 @@ class MusicFolderHandler(FileSystemEventHandler):
 
 def load_config():
     """Load environment variables"""
-    music_path = os.getenv('MUSIC_PATH')
     update_interval = os.getenv('UPDATE_INTERVAL')
     discord_webhook = os.getenv('DISCORD_WEBHOOK')
 
-    if not all([music_path, update_interval, discord_webhook]):
+    if not all([update_interval, discord_webhook]):
         raise ValueError("Missing required environment variables")
+
+    # Use the mounted path directly
+    music_path = "/music"
 
     return music_path, update_interval, discord_webhook
 
 def update_artist_list():
     """Update the JSON list of artists from the music directory"""
-    music_path = os.getenv('MUSIC_PATH')
+    music_path = "/music"
     artists = [d for d in os.listdir(music_path) 
               if os.path.isdir(os.path.join(music_path, d))]
     
@@ -73,7 +75,7 @@ def check_new_releases():
         return
 
     # Initialize Discogs client
-    discogs = discogs_client.Client('TracklyBot/1.0')
+    discogs = discogs_client.Client('TracklyBot/1.0', user_token=os.getenv('DISCOGS_TOKEN'))
     
     for artist in artists:
         try:
