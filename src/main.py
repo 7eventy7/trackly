@@ -73,7 +73,7 @@ def check_new_releases():
         return
 
     # Initialize Discogs client
-    discogs = discogs_client.Client('ArtistTrackerBot/1.0')
+    discogs = discogs_client.Client('TracklyBot/1.0')
     
     for artist in artists:
         try:

@@ -1,13 +1,14 @@
 version: '3.8'
 
 services:
-  artist-tracker:
+  trackly:
     build: .
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
     environment:
       - MUSIC_PATH=/music
-      - UPDATE_INTERVAL=${UPDATE_INTERVAL:-"00:00"}  # Default to midnight
-      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
+      - UPDATE_INTERVAL=0 * * * *  # Default to every hour
+      - DISCORD_WEBHOOK=  # Set this to your Discord webhook URL
+      - DISCOGS_TOKEN=  # Set this to your Discogs API token
     restart: unless-stopped
-    container_name: artist-tracker
+    container_name: trackly
