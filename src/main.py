@@ -1,5 +1,4 @@
 import os
-import json
 import time
 from datetime import datetime
 import schedule
@@ -10,6 +9,7 @@ from dotenv import load_dotenv
 import logging
 import random
 import colorsys
+from json_handler import NotifiedAlbumsHandler, ArtistsConfigHandler
 
 # Set up logging
 logging.basicConfig(
@@ -24,6 +24,10 @@ NOTIFIED_ALBUMS_PATH = "/config/notified_albums.json"
 MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2"
 USER_AGENT = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
 
+# Initialize handlers
+artists_handler = ArtistsConfigHandler(CONFIG_PATH)
+notified_albums_handler = NotifiedAlbumsHandler(NOTIFIED_ALBUMS_PATH)
+
 def generate_vibrant_color():
     """Generate a vibrant color using HSV color space"""
     hue = random.random()
@@ -34,11 +38,12 @@ def generate_vibrant_color():
     return color
 
 class RateLimiter:
-    def __init__(self, min_delay=1.0, max_delay=3.0):
+    def __init__(self, min_delay=1.0, max_delay=3.0, max_retries=3):
         self.min_delay = min_delay
         self.max_delay = max_delay
         self.last_request_time = 0
         self.consecutive_failures = 0
+        self.max_retries = max_retries
 
     def wait(self):
         now = time.time()
@@ -58,10 +63,10 @@ class RateLimiter:
 
     def failure(self):
         self.consecutive_failures += 1
+        return self.consecutive_failures < self.max_retries
 
 class MusicFolderHandler(FileSystemEventHandler):
     def __init__(self):
-        self.artists_file = CONFIG_PATH
         self.last_update = time.time()
         self.update_cooldown = 5
 
@@ -74,42 +79,9 @@ class MusicFolderHandler(FileSystemEventHandler):
             logger.info(f"Directory change detected: {event.src_path}")
             validate_and_update_artist_list()
 
-def is_valid_artists_file():
-    """Check if artists.json exists and contains valid data"""
-    try:
-        if not os.path.exists(CONFIG_PATH):
-            logger.info("artists.json not found")
-            return False
-
-        with open(CONFIG_PATH, 'r') as f:
-            data = json.load(f)
-            
-        required_keys = {'artists', 'last_updated'}
-        if not all(key in data for key in required_keys):
-            logger.warning("artists.json missing required keys")
-            return False
-            
-        if not isinstance(data['artists'], list):
-            logger.warning("artists.json 'artists' field is not a list")
-            return False
-            
-        try:
-            last_updated = datetime.fromisoformat(data['last_updated'])
-            if (datetime.now() - last_updated).days > 7:  # Consider file stale after 7 days
-                logger.info("artists.json is stale (>7 days old)")
-                return False
-        except ValueError:
-            logger.warning("Invalid last_updated date format in artists.json")
-            return False
-            
-        logger.info(f"artists.json validated successfully. Contains {len(data['artists'])} artists")
-        return True
-    except (json.JSONDecodeError, KeyError) as e:
-        logger.error(f"Error validating artists.json: {str(e)}")
-        return False
-
 def load_config():
     """Load environment variables"""
+    load_dotenv()
     update_interval = os.getenv('UPDATE_INTERVAL')
     discord_webhook = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
@@ -129,22 +101,21 @@ def load_config():
     return music_path, update_interval, discord_webhook, discord_role
 
 def make_musicbrainz_request(url, params, rate_limiter):
-    """Make a rate-limited request to MusicBrainz API"""
+    """Make a rate-limited request to MusicBrainz API with improved error handling"""
     headers = {'User-Agent': USER_AGENT}
-    max_retries = 3
     
-    for attempt in range(max_retries):
+    while True:
         rate_limiter.wait()
         try:
-            response = requests.get(url, params=params, headers=headers)
+            response = requests.get(url, params=params, headers=headers, timeout=10)
             response.raise_for_status()
             rate_limiter.success()
             return response.json()
         except requests.exceptions.RequestException as e:
-            rate_limiter.failure()
-            logger.warning(f"Request failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
-            if attempt == max_retries - 1:
+            if not rate_limiter.failure():
+                logger.error(f"Max retries exceeded for MusicBrainz request: {str(e)}")
                 raise
+            logger.warning(f"Request failed, retrying: {str(e)}")
     return None
 
 def get_artist_id(artist_name, rate_limiter):
@@ -167,7 +138,7 @@ def get_artist_id(artist_name, rate_limiter):
 
 def validate_and_update_artist_list():
     """Check if artists.json needs updating and update if necessary"""
-    if not is_valid_artists_file():
+    if not artists_handler.is_valid():
         logger.info("Updating artist list due to invalid or missing file")
         update_artist_list()
         return True
@@ -199,13 +170,7 @@ def update_artist_list():
                 })
         
         logger.info(f"Found {len(artists)} artists in music directory")
-        
-        with open(CONFIG_PATH, 'w') as f:
-            json.dump({
-                'artists': artists,
-                'last_updated': datetime.now().isoformat()
-            }, f, indent=2)
-        
+        artists_handler.update_artists(artists)
         logger.info("Artist list updated successfully")
         logger.debug(f"Artists found: {', '.join([a['name'] for a in artists])}")
     except Exception as e:
@@ -220,38 +185,8 @@ def format_release_date(date_str):
     except ValueError:
         return date_str
 
-def is_album_notified(artist, album):
-    """Check if an album has already been notified"""
-    try:
-        with open(NOTIFIED_ALBUMS_PATH, 'r') as f:
-            data = json.load(f)
-            return any(n['artist'] == artist and n['album'] == album for n in data['notified_albums'])
-    except (FileNotFoundError, json.JSONDecodeError):
-        return False
-
-def add_notified_album(artist, album, release_date):
-    """Add an album to the notified albums list"""
-    try:
-        try:
-            with open(NOTIFIED_ALBUMS_PATH, 'r') as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = {'notified_albums': []}
-        
-        data['notified_albums'].append({
-            'artist': artist,
-            'album': album,
-            'release_date': release_date,
-            'notified_at': datetime.now().isoformat()
-        })
-        
-        with open(NOTIFIED_ALBUMS_PATH, 'w') as f:
-            json.dump(data, f, indent=2)
-    except Exception as e:
-        logger.error(f"Error adding notified album: {str(e)}")
-
-def send_discord_notification(release_info, artist_color):
-    """Send Discord notification for new release"""
+def send_discord_notification(release_info, artist_color, max_retries=3):
+    """Send Discord notification for new release with improved error handling"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
     
@@ -279,34 +214,38 @@ def send_discord_notification(release_info, artist_color):
         "embeds": [embed]
     }
     
-    try:
-        response = requests.post(webhook_url, json=payload)
-        response.raise_for_status()
-        logger.info("Discord notification sent successfully")
-        time.sleep(600)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Discord notification: {str(e)}")
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+            logger.info("Discord notification sent successfully")
+            time.sleep(2)  # Reduced delay between notifications
+            return True
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Failed to send Discord notification (attempt {attempt + 1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                logger.error("Max retries exceeded for Discord notification")
+                return False
 
 def check_new_releases():
     """Check for new releases from tracked artists"""
     logger.info("Starting new release check...")
     
-    # Update artist list before checking releases
+    # Clean up old notifications at the start of each year
+    if datetime.now().month == 1 and datetime.now().day == 1:
+        logger.info("Performing annual cleanup of old notifications")
+        notified_albums_handler.cleanup_old_notifications()
+    
+    # Update artist list if needed
     if validate_and_update_artist_list():
         logger.info("Artist list was updated before release check")
     
     rate_limiter = RateLimiter()
+    artists_data = artists_handler.read_json()
+    artists = artists_data.get('artists', [])
     
-    try:
-        with open(CONFIG_PATH, 'r') as f:
-            data = json.load(f)
-            artists = data['artists']
-            last_check = datetime.fromisoformat(data.get('last_updated', '2024-01-01T00:00:00'))
-            logger.info(f"Loaded {len(artists)} artists from config. Last check: {last_check}")
-    except Exception as e:
-        logger.error(f"Error reading config, skipping release check: {str(e)}")
-        return
-
     current_year = datetime.now().year
     
     for artist in artists:
@@ -337,7 +276,7 @@ def check_new_releases():
                     artist_folder = os.path.join('/music', artist['name'])
                     album_folder = os.path.join(artist_folder, album_title)
                     
-                    if not os.path.exists(album_folder) and not is_album_notified(artist['name'], album_title):
+                    if not os.path.exists(album_folder) and not notified_albums_handler.is_album_notified(artist['name'], album_title):
                         logger.info(f"Found new album for {artist['name']}: {album_title}")
                         release_info = {
                             'artist': artist['name'],
@@ -345,8 +284,8 @@ def check_new_releases():
                             'release_date': release_date
                         }
                         
-                        send_discord_notification(release_info, artist.get('color'))
-                        add_notified_album(artist['name'], album_title, release_date)
+                        if send_discord_notification(release_info, artist.get('color')):
+                            notified_albums_handler.add_notified_album(artist['name'], album_title, release_date)
                         
                 except Exception as e:
                     logger.error(f"Error processing release for {artist['name']}: {str(e)}")
@@ -365,17 +304,8 @@ def main():
     # Load environment variables
     music_path, update_interval, _, _ = load_config()
     
-    # Make sure config directory exists
-    try:
-        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-        os.makedirs(os.path.dirname(NOTIFIED_ALBUMS_PATH), exist_ok=True)
-        logger.info(f"Config directory ensured at {os.path.dirname(CONFIG_PATH)}")
-    except Exception as e:
-        logger.error(f"Failed to create config directory: {str(e)}")
-        raise
-    
     # Only perform initial scan if necessary
-    if not is_valid_artists_file():
+    if not artists_handler.is_valid():
         logger.info("Performing initial music directory scan...")
         update_artist_list()
     else:

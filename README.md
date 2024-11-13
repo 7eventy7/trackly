@@ -13,6 +13,10 @@ Trackly is a Docker container that monitors your music library and notifies you 
 - 🔄 **Real-time Updates** - Instant updates when new artists are added to the music folder
 - 🚦 **Smart Rate Limiting** - Respects MusicBrainz API rate limits with exponential backoff
 - 🎯 **Year-Specific Tracking** - Only tracks releases from the current year
+- 🔒 **Thread-Safe Operations** - Prevents race conditions in file operations
+- 💾 **Efficient Caching** - Reduces file I/O with smart JSON caching
+- 🧹 **Automatic Cleanup** - Annual cleanup of old notifications
+- 🛡️ **Enhanced Error Handling** - Robust error recovery and retry mechanisms
 
 ## 📋 Prerequisites
 
@@ -135,6 +139,16 @@ The bot sends beautiful Discord notifications with:
 4. **Local Library Check**:
    - Compares new releases with your local music folders
    - Only notifies for albums you don't have
+5. **Performance Optimizations**:
+   - JSON caching with TTL (Time To Live)
+   - Thread-safe file operations
+   - Efficient memory management
+   - Automatic cleanup of old notifications
+6. **Error Handling**:
+   - Graceful recovery from API failures
+   - Retry mechanisms with maximum attempts
+   - Thread-safe file operations
+   - Proper cleanup of resources
 
 ## 📊 Monitoring and Logs
 
@@ -178,7 +192,31 @@ ls -l $MUSIC_PATH
 
 # Check container logs
 docker-compose logs
+
+# Common Issues
+- If you see file access errors, check directory permissions
+- For API rate limit issues, the system will automatically back off
+- Memory usage spikes are normal during initial scan
 ```
+
+## 🆕 Recent Improvements
+
+### Performance Enhancements
+- Implemented JSON caching to reduce file I/O operations
+- Added thread-safe file operations to prevent race conditions
+- Improved memory management with efficient data structures
+- Automatic cleanup of old notifications (runs on January 1st)
+
+### Error Handling Improvements
+- Enhanced MusicBrainz API error handling with retries
+- Improved Discord webhook reliability
+- Added maximum retry limits for all operations
+- Implemented graceful error recovery
+
+### Memory Management
+- Efficient JSON file handling with caching
+- Proper cleanup of file observer resources
+- Reduced memory footprint for file operations
 
 ## 📄 License
 
