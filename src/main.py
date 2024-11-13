@@ -4,8 +4,6 @@ import time
 from datetime import datetime
 import schedule
 import requests
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 from dotenv import load_dotenv
 import logging
 import random
@@ -116,20 +114,6 @@ class RateLimiter:
     def failure(self) -> None:
         self.consecutive_failures += 1
 
-class MusicFolderHandler(FileSystemEventHandler):
-    def __init__(self):
-        self.last_update = time.time()
-        self.update_cooldown = 5
-
-    def on_any_event(self, event):
-        if time.time() - self.last_update < self.update_cooldown:
-            return
-        
-        if event.is_directory:
-            self.last_update = time.time()
-            logger.info(f"Directory change detected: {event.src_path}")
-            validate_and_update_artist_list()
-
 def is_valid_artists_file() -> bool:
     """Check if artists.json exists and contains valid data"""
     data = safe_read_json(ARTISTS_FILE_PATH)
@@ -216,13 +200,6 @@ def get_artist_id(artist_name: str, rate_limiter: RateLimiter) -> Optional[str]:
     except Exception as e:
         logger.error(f"Error getting MusicBrainz ID for {artist_name}: {str(e)}")
         return None
-
-def validate_and_update_artist_list() -> bool:
-    """Check if artists.json needs updating and update if necessary"""
-    if not is_valid_artists_file():
-        logger.info("Updating artist list due to invalid or missing file")
-        return update_artist_list()
-    return False
 
 def update_artist_list() -> bool:
     """Update the JSON list of artists from the music directory"""
@@ -324,14 +301,41 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
 
+def check_year_change() -> None:
+    """Check if the year has changed and clear notified.json if needed"""
+    logger.info("Checking for year change...")
+    data = safe_read_json(NOTIFIED_FILE_PATH)
+    if not data:
+        return
+
+    try:
+        current_year = datetime.now().year
+        for album in data.get('notified_albums', []):
+            notified_at = datetime.fromisoformat(album['notified_at'])
+            if notified_at.year < current_year:
+                logger.info("Year has changed, clearing notified.json")
+                safe_write_json(NOTIFIED_FILE_PATH, {'notified_albums': []})
+                break
+    except Exception as e:
+        logger.error(f"Error checking year change: {str(e)}")
+
 def check_new_releases() -> None:
-    """Check for new releases from tracked artists"""
-    logger.info("Starting new release check...")
+    """Check for new releases from tracked artists with consolidated operations"""
+    logger.info("Starting consolidated operations check...")
     
-    # Update artist list before checking releases
-    if validate_and_update_artist_list():
-        logger.info("Artist list was updated before release check")
+    # Step 1: Scan music directory and update artists.json
+    logger.info("Step 1: Updating artist list...")
+    if not is_valid_artists_file():
+        if not update_artist_list():
+            logger.error("Failed to update artist list")
+            return
     
+    # Step 2: Check for year change
+    logger.info("Step 2: Checking for year change...")
+    check_year_change()
+    
+    # Step 3: Check for new releases
+    logger.info("Step 3: Checking for new releases...")
     rate_limiter = RateLimiter()
     data = safe_read_json(ARTISTS_FILE_PATH)
     
@@ -392,7 +396,7 @@ def check_new_releases() -> None:
             logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
             continue
     
-    logger.info("Completed release check for all artists")
+    logger.info("Completed consolidated operations check")
 
 def main() -> None:
     """Main function to run the artist tracker with improved startup sequence"""
@@ -413,20 +417,12 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, skipping initial scan")
         
-        # Step 4: Set up file system monitoring
-        logger.info("Setting up file system monitoring...")
-        event_handler = MusicFolderHandler()
-        observer = Observer()
-        observer.schedule(event_handler, music_path, recursive=False)
-        observer.start()
-        logger.info(f"File system monitoring active for: {music_path}")
-        
-        # Step 5: Schedule regular checks
-        logger.info(f"Scheduling daily checks at {update_interval}")
+        # Step 4: Schedule consolidated operations
+        logger.info(f"Scheduling consolidated operations at {update_interval}")
         schedule.every().day.at(update_interval).do(check_new_releases)
         
-        # Step 6: Run initial check
-        logger.info("Running initial release check...")
+        # Step 5: Run initial check
+        logger.info("Running initial consolidated operations check...")
         check_new_releases()
         
         logger.info("Trackly startup complete")
@@ -440,8 +436,6 @@ def main() -> None:
         raise
     except KeyboardInterrupt:
         logger.info("Shutting down Trackly...")
-        observer.stop()
-        observer.join()
         logger.info("Shutdown complete")
 
 if __name__ == "__main__":
