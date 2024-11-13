@@ -1,24 +1,34 @@
-# <img src="icons/trackly.png" width="32"> Trackly
+<div align="center">
 
-A sophisticated music release tracker that monitors your music library and notifies you about new album releases from your favorite artists via Discord.
+# <img src="icons/trackly.png" width="32" height="32" alt="Trackly Icon"> Trackly
 
-![GitHub last commit](https://img.shields.io/github/last-commit/7eventy7/trackly)
-![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly)
-![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly)
-![GitHub license](https://img.shields.io/github/license/7eventy7/trackly)
+### Music Release Tracker for Discord
 
-## Features
+[![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly.svg?style=social&label=Star&maxAge=2592000)](https://github.com/7eventy7/trackly/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/issues)
+[![Docker Pulls](https://img.shields.io/docker/pulls/7eventy7/trackly.svg)](https://hub.docker.com/r/7eventy7/trackly)
+[![License](https://img.shields.io/github/license/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/blob/main/LICENSE)
 
-- 🎵 Automatically scans your music directory for artists
-- 🔍 Uses MusicBrainz API to track new album releases
-- 🎨 Generates vibrant colors for each artist's notifications
-- 📢 Sends Discord notifications for new releases
-- ⚡ Smart rate limiting and error handling
-- 🔄 Automatic yearly cache clearing
-- 📁 Maintains a history of notified releases
-- 🕒 Configurable update intervals
+A powerful Python application that monitors your music library and notifies you about new album releases from your favorite artists through Discord. Stay updated with the latest releases from artists in your collection.
 
-## Installation
+</div>
+
+---
+
+## ✨ Features
+
+- **🎵 Automatic Artist Tracking**: Automatically tracks artists from your music directory
+- **🔍 MusicBrainz Integration**: Uses MusicBrainz API for accurate release information
+- **📢 Discord Notifications**: Get notified about new releases through Discord webhooks
+- **🎨 Unique Artist Colors**: Each artist gets their own vibrant color for easy identification
+- **⏱️ Smart Rate Limiting**: Built-in rate limiting for API requests
+- **🔄 Automatic Updates**: Regular checks for new releases with configurable intervals
+- **📅 Year-Based Reset**: Notification history automatically resets each year
+- **🐳 Docker Support**: Easy deployment with Docker and Docker Compose
+
+## 🚀 Getting Started
+
+### Using Docker Compose (Recommended)
 
 1. Clone the repository:
 ```bash
@@ -26,48 +36,56 @@ git clone https://github.com/7eventy7/trackly.git
 cd trackly
 ```
 
-2. Install dependencies:
+2. Configure your environment variables:
 ```bash
-pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your Discord webhook URL and settings
 ```
 
-3. Set up environment variables:
-```bash
-UPDATE_INTERVAL=08:00  # Time to check for updates (24h format)
-DISCORD_WEBHOOK=your_webhook_url
-DISCORD_ROLE=optional_role_id  # Optional
-```
-
-## Configuration
-
-Trackly uses two main configuration files:
-
-- `artists.json`: Stores tracked artists and their MusicBrainz IDs
-- `notified.json`: Keeps track of previously notified releases
-
-These files are automatically created and managed in the `/config` directory.
-
-## Usage
-
-1. Place Trackly in a directory with access to your music library
-2. Ensure your music is organized in the format: `/music/artist_name/album_name`
-3. Run Trackly:
-```bash
-python src/main.py
-```
-
-Trackly will:
-- Scan your music directory
-- Create necessary configuration files
-- Start monitoring for new releases
-- Send Discord notifications for new albums
-
-## Docker Support
-
-Trackly can be run in a Docker container:
-
+3. Start the application:
 ```bash
 docker-compose up -d
 ```
 
+## ⚙️ Configuration
+
+### Environment Variables
+- `DISCORD_WEBHOOK`: Your Discord webhook URL (required)
+- `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
+- `UPDATE_INTERVAL`: Time to check for updates (e.g., "12:00")
+
+### Volumes
+- `/music`: Mount your music directory here
+- `/config`: Persistent storage for application data
+
+## 🔄 Docker Hub Updates
+
+Trackly is automatically published to Docker Hub when a new release is created. Images are tagged with both the specific version number and 'latest'.
+
+To use the latest version from Docker Hub:
+```bash
+docker pull 7eventy7/trackly:latest
+```
+
+## 🛠️ Technical Stack
+
+- Python 3
+- MusicBrainz API
+- Discord Webhooks
+- Docker
+- Schedule
+- Requests
+- Logging
+- JSON
+
+## 📝 License
+
+MIT License - feel free to use this project for any purpose.
+
+---
+
+<div align="center">
+
 Made with ❤️ by [7eventy7](https://github.com/7eventy7)
+
+</div>
