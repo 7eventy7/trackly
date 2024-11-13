@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import logging
 import random
 import colorsys
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from croniter import croniter, CroniterNotAlphaError, CroniterBadCronError
 
@@ -20,14 +20,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration Constants
-CONFIG_DIR = "/config"
-ARTISTS_FILE_PATH = os.path.join(CONFIG_DIR, "artists.json")
-NOTIFIED_FILE_PATH = os.path.join(CONFIG_DIR, "notified.json")
-MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2"
-USER_AGENT = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
-FILE_CHECK_INTERVAL = 600  # 10 minutes in seconds
-MAX_RETRIES = 3
-STALE_FILE_DAYS = 7
+CONFIG_DIR: str = "/config"
+ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
+NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
+STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
+MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
+USER_AGENT: str = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
+FILE_CHECK_INTERVAL: int = 600  # 10 minutes in seconds
+MAX_RETRIES: int = 3
+STALE_FILE_DAYS: int = 7
 
 def ensure_config_directory() -> None:
     """Ensure config directory exists and has proper permissions"""
@@ -39,7 +40,7 @@ def ensure_config_directory() -> None:
         logger.error(f"Failed to create config directory: {str(e)}")
         raise
 
-def safe_read_json(file_path: str) -> Optional[Dict]:
+def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
     """Safely read and parse a JSON file with proper error handling"""
     try:
         if not os.path.exists(file_path):
@@ -55,19 +56,16 @@ def safe_read_json(file_path: str) -> Optional[Dict]:
         logger.error(f"Error reading {file_path}: {str(e)}")
         return None
 
-def safe_write_json(file_path: str, data: Dict) -> bool:
+def safe_write_json(file_path: str, data: Dict[str, Any]) -> bool:
     """Safely write data to a JSON file with validation"""
     try:
-        # Write to temporary file first
         temp_path = f"{file_path}.tmp"
         with open(temp_path, 'w') as f:
             json.dump(data, f, indent=2)
 
-        # Validate the written data
         with open(temp_path, 'r') as f:
             json.load(f)
 
-        # If validation successful, move temp file to actual file
         os.replace(temp_path, file_path)
         logger.info(f"Successfully wrote to {file_path}")
         return True
@@ -80,6 +78,45 @@ def safe_write_json(file_path: str, data: Dict) -> bool:
                 pass
         return False
 
+def is_first_startup() -> bool:
+    """Check if this is the first time the container is starting"""
+    startup_data = safe_read_json(STARTUP_FILE_PATH)
+    return startup_data is None or not startup_data.get('initial_startup_complete', False)
+
+def mark_startup_complete() -> None:
+    """Mark the initial startup as complete"""
+    safe_write_json(STARTUP_FILE_PATH, {
+        'initial_startup_complete': True,
+        'first_startup_time': datetime.now().isoformat()
+    })
+
+def send_startup_notification(webhook_url: str, discord_role: Optional[str]) -> None:
+    """Send a Discord notification when the container starts for the first time"""
+    logger.info("Sending initial startup notification to Discord")
+    
+    embed = {
+        "title": "🎵 Trackly Started Successfully!",
+        "description": "The Trackly container has been initialized and is now monitoring for new releases.",
+        "color": 0x00FF00,
+        "footer": {
+            "text": f"First Startup: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        }
+    }
+    
+    role_mention = f"<@&{discord_role}>" if discord_role else ""
+    
+    payload = {
+        "content": role_mention,
+        "embeds": [embed]
+    }
+    
+    try:
+        response = requests.post(webhook_url, json=payload)
+        response.raise_for_status()
+        logger.info("Startup notification sent successfully")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send startup notification: {str(e)}")
+
 def generate_vibrant_color() -> int:
     """Generate a vibrant color using HSV color space"""
     hue = random.random()
@@ -90,10 +127,10 @@ def generate_vibrant_color() -> int:
 
 class RateLimiter:
     def __init__(self, min_delay: float = 1.0, max_delay: float = 3.0):
-        self.min_delay = min_delay
-        self.max_delay = max_delay
-        self.last_request_time = 0
-        self.consecutive_failures = 0
+        self.min_delay: float = min_delay
+        self.max_delay: float = max_delay
+        self.last_request_time: float = 0
+        self.consecutive_failures: int = 0
 
     def wait(self) -> None:
         now = time.time()
@@ -145,7 +182,7 @@ def is_valid_artists_file() -> bool:
         logger.error(f"Error validating artists.json: {str(e)}")
         return False
 
-def load_config() -> tuple:
+def load_config() -> Tuple[str, str, str, Optional[str], bool]:
     """Load environment variables with validation"""
     load_dotenv()
     
@@ -162,7 +199,6 @@ def load_config() -> tuple:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    # Validate cron expression
     try:
         if not croniter.is_valid(required_vars['UPDATE_INTERVAL']):
             raise ValueError("Invalid cron expression")
@@ -172,9 +208,18 @@ def load_config() -> tuple:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    return "/music", required_vars['UPDATE_INTERVAL'], required_vars['DISCORD_WEBHOOK'], os.getenv('DISCORD_ROLE')
+    # Get optional NOTIFY_ON_SCAN environment variable
+    notify_on_scan = os.getenv('NOTIFY_ON_SCAN', 'false').lower() == 'true'
 
-def make_musicbrainz_request(url: str, params: Dict, rate_limiter: RateLimiter) -> Optional[Dict]:
+    return (
+        "/music",
+        required_vars['UPDATE_INTERVAL'],
+        required_vars['DISCORD_WEBHOOK'],
+        os.getenv('DISCORD_ROLE'),
+        notify_on_scan
+    )
+
+def make_musicbrainz_request(url: str, params: Dict[str, Any], rate_limiter: RateLimiter) -> Optional[Dict[str, Any]]:
     """Make a rate-limited request to MusicBrainz API with retries"""
     headers = {'User-Agent': USER_AGENT}
     
@@ -273,29 +318,40 @@ def add_notified_album(artist: str, album: str, release_date: str) -> bool:
         logger.error(f"Error adding notified album: {str(e)}")
         return False
 
-def send_discord_notification(release_info: Dict[str, str], artist_color: Optional[int]) -> None:
-    """Send Discord notification for new release with rate limiting"""
+def send_discord_notification(release_info: Dict[str, str], artist_color: Optional[int], is_scan_notification: bool = False) -> None:
+    """Send Discord notification for new release or scan completion with rate limiting"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
     
-    logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
-    
-    try:
-        color = int(artist_color) if artist_color is not None else 0x9B59B6
-    except (ValueError, TypeError):
-        color = 0x9B59B6
-    
-    formatted_date = format_release_date(release_info['release_date'])
-    role_mention = f"<@&{discord_role}>" if discord_role else ""
-    
-    embed = {
-        "title": "New Album Release!",
-        "description": f"{release_info['artist']}\n> {release_info['title']}",
-        "color": color,
-        "footer": {
-            "text": f"Release Date: {formatted_date}"
+    if is_scan_notification:
+        logger.info("Sending scan completion notification")
+        embed = {
+            "title": "🔍 Trackly Scan Completed",
+            "description": "No new releases found",
+            "color": 0x808080,
+            "footer": {
+                "text": f"Scan completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            }
         }
-    }
+    else:
+        logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
+        try:
+            color = int(artist_color) if artist_color is not None else 0x9B59B6
+        except (ValueError, TypeError):
+            color = 0x9B59B6
+        
+        formatted_date = format_release_date(release_info['release_date'])
+        
+        embed = {
+            "title": "New Album Release!",
+            "description": f"{release_info['artist']}\n> {release_info['title']}",
+            "color": color,
+            "footer": {
+                "text": f"Release Date: {formatted_date}"
+            }
+        }
+    
+    role_mention = f"<@&{discord_role}>" if discord_role else ""
     
     payload = {
         "content": role_mention,
@@ -306,7 +362,8 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
         response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
         logger.info("Discord notification sent successfully")
-        time.sleep(FILE_CHECK_INTERVAL)  # Wait before next check
+        if not is_scan_notification:
+            time.sleep(FILE_CHECK_INTERVAL)
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
 
@@ -327,22 +384,72 @@ def check_year_change() -> None:
     except Exception as e:
         logger.error(f"Error checking year change: {str(e)}")
 
-def check_new_releases() -> None:
-    """Check for new releases from tracked artists with consolidated operations"""
+def process_release_group(
+    release_group: Dict[str, Any],
+    artist_name: str,
+    artist_color: Optional[int],
+    current_year: int
+) -> None:
+    """Process a single release group for new albums"""
+    release_date = release_group.get('first-release-date', '')
+    if not release_date.startswith(str(current_year)):
+        return
+
+    album_title = release_group['title']
+    artist_folder = os.path.join('/music', artist_name)
+    album_folder = os.path.join(artist_folder, album_title)
+
+    if not os.path.exists(album_folder) and not is_album_notified(artist_name, album_title):
+        logger.info(f"Found new album for {artist_name}: {album_title}")
+        release_info = {
+            'artist': artist_name,
+            'title': album_title,
+            'release_date': release_date
+        }
+
+        if add_notified_album(artist_name, album_title, release_date):
+            send_discord_notification(release_info, artist_color)
+
+def check_artist_releases(artist: Dict[str, Any], rate_limiter: RateLimiter, current_year: int) -> None:
+    """Check releases for a single artist"""
+    if not artist['id']:
+        logger.warning(f"Skipping {artist['name']} - no MusicBrainz ID")
+        return
+
+    logger.info(f"Checking releases for artist: {artist['name']}")
+    try:
+        url = f"{MUSICBRAINZ_BASE_URL}/release-group"
+        params = {
+            'artist': artist['id'],
+            'type': 'album',
+            'limit': 25,
+            'offset': 0,
+            'fmt': 'json'
+        }
+
+        release_data = make_musicbrainz_request(url, params, rate_limiter)
+        if not release_data:
+            return
+
+        for release_group in release_data.get('release-groups', []):
+            try:
+                process_release_group(release_group, artist['name'], artist.get('color'), current_year)
+            except Exception as e:
+                logger.error(f"Error processing release for {artist['name']}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
+
+def check_new_releases(notify_on_scan: bool = False) -> None:
+    """Check for new releases from tracked artists"""
     logger.info("Starting the cron update...")
     
-    # Step 1: Scan music directory and update artists.json
-    logger.info("Updating artist list...")
     if not is_valid_artists_file():
         if not update_artist_list():
             logger.error("Failed to update artist list")
             return
     
-    # Step 2: Check for year change
-    logger.info("Checking for year change...")
     check_year_change()
     
-    # Step 3: Check for new releases
     logger.info("Checking for new releases...")
     rate_limiter = RateLimiter()
     data = safe_read_json(ARTISTS_FILE_PATH)
@@ -355,69 +462,30 @@ def check_new_releases() -> None:
     current_year = datetime.now().year
     logger.info(f"Checking releases for {len(artists)} artists")
     
+    new_releases_found = False
     for artist in artists:
-        if not artist['id']:
-            logger.warning(f"Skipping {artist['name']} - no MusicBrainz ID")
-            continue
-            
-        logger.info(f"Checking releases for artist: {artist['name']}")
-        try:
-            url = f"{MUSICBRAINZ_BASE_URL}/release-group"
-            params = {
-                'artist': artist['id'],
-                'type': 'album',
-                'limit': 25,
-                'offset': 0,
-                'fmt': 'json'
-            }
-            
-            release_data = make_musicbrainz_request(url, params, rate_limiter)
-            if not release_data:
-                continue
-            
-            for release_group in release_data.get('release-groups', []):
-                try:
-                    release_date = release_group.get('first-release-date', '')
-                    if not release_date.startswith(str(current_year)):
-                        continue
-                        
-                    album_title = release_group['title']
-                    artist_folder = os.path.join('/music', artist['name'])
-                    album_folder = os.path.join(artist_folder, album_title)
-                    
-                    if not os.path.exists(album_folder) and not is_album_notified(artist['name'], album_title):
-                        logger.info(f"Found new album for {artist['name']}: {album_title}")
-                        release_info = {
-                            'artist': artist['name'],
-                            'title': album_title,
-                            'release_date': release_date
-                        }
-                        
-                        if add_notified_album(artist['name'], album_title, release_date):
-                            send_discord_notification(release_info, artist.get('color'))
-                        
-                except Exception as e:
-                    logger.error(f"Error processing release for {artist['name']}: {str(e)}")
-                    continue
-                    
-        except Exception as e:
-            logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
-            continue
+        check_artist_releases(artist, rate_limiter, current_year)
+        if new_releases_found:
+            break
+    
+    if notify_on_scan and not new_releases_found:
+        send_discord_notification({}, None, True)
     
     logger.info("Completed the cron update")
 
 def main() -> None:
-    """Main function to run the artist tracker with startup sequence for configuration only"""
+    """Main function to run the artist tracker"""
     logger.info("Starting Trackly...")
     
     try:
-        # Step 1: Ensure config directory exists
         ensure_config_directory()
+        music_path, cron_schedule, webhook_url, discord_role, notify_on_scan = load_config()
         
-        # Step 2: Load environment variables
-        music_path, cron_schedule, _, _ = load_config()
+        # Handle first-time startup notification
+        if is_first_startup():
+            send_startup_notification(webhook_url, discord_role)
+            mark_startup_complete()
         
-        # Step 3: Validate artists.json and perform initial scan if needed
         if not is_valid_artists_file():
             logger.info("Performing initial music directory scan...")
             if not update_artist_list():
@@ -427,21 +495,18 @@ def main() -> None:
         
         logger.info("Trackly startup complete - configuration validated")
         
-        # Step 4: Set up cron-based scheduling
         cron = croniter(cron_schedule, datetime.now())
         
         while True:
             next_run = cron.get_next(datetime)
             now = datetime.now()
             
-            # Sleep until next scheduled run
             sleep_seconds = (next_run - now).total_seconds()
             if sleep_seconds > 0:
                 logger.info(f"Sleeping until next scheduled run at {next_run}")
                 time.sleep(sleep_seconds)
             
-            # Run the consolidated operations
-            check_new_releases()
+            check_new_releases(notify_on_scan)
             
     except Exception as e:
         logger.error(f"Critical error during startup: {str(e)}")

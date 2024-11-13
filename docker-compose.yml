@@ -3,13 +3,14 @@ version: '3.8'
 
 services:
   trackly:
-    build: .
+    image: 7eventy7/trackly
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
       - ./config:/config  # Persistent storage for config
     environment:
-      - UPDATE_INTERVAL=0 0 * * *  # Default to midnight (cron format: minute hour day month weekday)
-      - DISCORD_WEBHOOK=  # Set this to your Discord webhook URL
-      - DISCORD_ROLE=  # Set this to your Discord role ID to ping
+      - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
+      - DISCORD_WEBHOOK=  # Set this to your discord webhook url for embeds
+      - DISCORD_ROLE=  # Set this to your discord role id number to ping
+      - NOTIFY_ON_SCAN=false  # Set to true to receive notifications for each scan completion
     restart: unless-stopped
     container_name: trackly
