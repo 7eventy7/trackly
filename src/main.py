@@ -26,19 +26,11 @@ USER_AGENT = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
 
 def generate_vibrant_color():
     """Generate a vibrant color using HSV color space"""
-    # Generate random hue (0-360)
     hue = random.random()
-    # High saturation (70-100%)
     saturation = random.uniform(0.7, 1.0)
-    # High value (80-100%)
     value = random.uniform(0.8, 1.0)
-    
-    # Convert HSV to RGB
     rgb = colorsys.hsv_to_rgb(hue, saturation, value)
-    
-    # Convert RGB to hex color code for Discord (0x000000 to 0xFFFFFF)
     color = int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
-    
     return color
 
 class RateLimiter:
@@ -49,14 +41,11 @@ class RateLimiter:
         self.consecutive_failures = 0
 
     def wait(self):
-        """Wait appropriate time between requests"""
         now = time.time()
-        # Calculate delay with jitter
         delay = self.min_delay + random.random() * (self.max_delay - self.min_delay)
-        # Add exponential backoff if there were failures
         if self.consecutive_failures > 0:
             delay *= (2 ** self.consecutive_failures)
-            delay = min(delay, 30)  # Cap maximum delay at 30 seconds
+            delay = min(delay, 30)
         
         time_since_last = now - self.last_request_time
         if time_since_last < delay:
@@ -65,11 +54,9 @@ class RateLimiter:
         self.last_request_time = time.time()
 
     def success(self):
-        """Reset failure counter on successful request"""
         self.consecutive_failures = 0
 
     def failure(self):
-        """Increment failure counter"""
         self.consecutive_failures += 1
 
 class MusicFolderHandler(FileSystemEventHandler):
@@ -85,7 +72,41 @@ class MusicFolderHandler(FileSystemEventHandler):
         if event.is_directory:
             self.last_update = time.time()
             logger.info(f"Directory change detected: {event.src_path}")
-            update_artist_list()
+            validate_and_update_artist_list()
+
+def is_valid_artists_file():
+    """Check if artists.json exists and contains valid data"""
+    try:
+        if not os.path.exists(CONFIG_PATH):
+            logger.info("artists.json not found")
+            return False
+
+        with open(CONFIG_PATH, 'r') as f:
+            data = json.load(f)
+            
+        required_keys = {'artists', 'last_updated'}
+        if not all(key in data for key in required_keys):
+            logger.warning("artists.json missing required keys")
+            return False
+            
+        if not isinstance(data['artists'], list):
+            logger.warning("artists.json 'artists' field is not a list")
+            return False
+            
+        try:
+            last_updated = datetime.fromisoformat(data['last_updated'])
+            if (datetime.now() - last_updated).days > 7:  # Consider file stale after 7 days
+                logger.info("artists.json is stale (>7 days old)")
+                return False
+        except ValueError:
+            logger.warning("Invalid last_updated date format in artists.json")
+            return False
+            
+        logger.info(f"artists.json validated successfully. Contains {len(data['artists'])} artists")
+        return True
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"Error validating artists.json: {str(e)}")
+        return False
 
 def load_config():
     """Load environment variables"""
@@ -144,6 +165,14 @@ def get_artist_id(artist_name, rate_limiter):
         logger.error(f"Error getting MusicBrainz ID for {artist_name}: {str(e)}")
         return None
 
+def validate_and_update_artist_list():
+    """Check if artists.json needs updating and update if necessary"""
+    if not is_valid_artists_file():
+        logger.info("Updating artist list due to invalid or missing file")
+        update_artist_list()
+        return True
+    return False
+
 def update_artist_list():
     """Update the JSON list of artists from the music directory"""
     logger.info("Updating artist list...")
@@ -159,14 +188,14 @@ def update_artist_list():
                 artists.append({
                     'name': artist_name,
                     'id': artist_id,
-                    'color': generate_vibrant_color()  # Generate unique vibrant color for artist
+                    'color': generate_vibrant_color()
                 })
             else:
                 logger.warning(f"Could not find MusicBrainz ID for {artist_name}")
                 artists.append({
                     'name': artist_name,
                     'id': None,
-                    'color': generate_vibrant_color()  # Generate unique vibrant color even if no ID
+                    'color': generate_vibrant_color()
                 })
         
         logger.info(f"Found {len(artists)} artists in music directory")
@@ -187,9 +216,9 @@ def format_release_date(date_str):
     """Format release date to a more readable format"""
     try:
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        return date_obj.strftime('%B %d, %Y')  # Simplified date format to avoid string formatting issues
+        return date_obj.strftime('%B %d, %Y')
     except ValueError:
-        return date_str  # Return original string if parsing fails
+        return date_str
 
 def is_album_notified(artist, album):
     """Check if an album has already been notified"""
@@ -228,15 +257,12 @@ def send_discord_notification(release_info, artist_color):
     
     logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
     
-    # Ensure we have a valid color value (default to purple if invalid)
     try:
         color = int(artist_color) if artist_color is not None else 0x9B59B6
     except (ValueError, TypeError):
-        color = 0x9B59B6  # Default to purple if color is invalid
+        color = 0x9B59B6
     
     formatted_date = format_release_date(release_info['release_date'])
-    
-    # Format role mention only if discord_role is provided
     role_mention = f"<@&{discord_role}>" if discord_role else ""
     
     embed = {
@@ -257,13 +283,18 @@ def send_discord_notification(release_info, artist_color):
         response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
         logger.info("Discord notification sent successfully")
-        time.sleep(600)  # 600 seconds = 10 minutes
+        time.sleep(600)
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
 
 def check_new_releases():
     """Check for new releases from tracked artists"""
     logger.info("Starting new release check...")
+    
+    # Update artist list before checking releases
+    if validate_and_update_artist_list():
+        logger.info("Artist list was updated before release check")
+    
     rate_limiter = RateLimiter()
     
     try:
@@ -272,15 +303,8 @@ def check_new_releases():
             artists = data['artists']
             last_check = datetime.fromisoformat(data.get('last_updated', '2024-01-01T00:00:00'))
             logger.info(f"Loaded {len(artists)} artists from config. Last check: {last_check}")
-    except FileNotFoundError:
-        logger.warning("No artists.json found. Running initial scan...")
-        update_artist_list()
-        return
-    except json.JSONDecodeError:
-        logger.error("Error reading artists.json - file may be corrupted")
-        return
     except Exception as e:
-        logger.error(f"Unexpected error reading config: {str(e)}")
+        logger.error(f"Error reading config, skipping release check: {str(e)}")
         return
 
     current_year = datetime.now().year
@@ -350,9 +374,12 @@ def main():
         logger.error(f"Failed to create config directory: {str(e)}")
         raise
     
-    # Initial scan of music directory
-    logger.info("Performing initial music directory scan...")
-    update_artist_list()
+    # Only perform initial scan if necessary
+    if not is_valid_artists_file():
+        logger.info("Performing initial music directory scan...")
+        update_artist_list()
+    else:
+        logger.info("Valid artists.json found, skipping initial scan")
     
     # Set up file system monitoring
     logger.info("Setting up file system monitoring...")
@@ -375,7 +402,7 @@ def main():
     try:
         while True:
             schedule.run_pending()
-            time.sleep(60)  # Check every minute for scheduled tasks
+            time.sleep(60)
     except KeyboardInterrupt:
         logger.info("Shutting down Trackly...")
         observer.stop()
