@@ -19,14 +19,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = "/config/artists.json"
-NOTIFIED_ALBUMS_PATH = "/config/notified_albums.json"
+# Standardize config paths
+CONFIG_DIR = "/config"
+CONFIG_PATHS = {
+    'artists': os.path.join(CONFIG_DIR, 'artists.json'),
+    'notified': os.path.join(CONFIG_DIR, 'notified.json')  # Standardized name
+}
+
 MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2"
 USER_AGENT = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
 
-# Initialize handlers
-artists_handler = ArtistsConfigHandler(CONFIG_PATH)
-notified_albums_handler = NotifiedAlbumsHandler(NOTIFIED_ALBUMS_PATH)
+# Ensure config directory exists
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# Initialize handlers with standardized paths
+artists_handler = ArtistsConfigHandler(CONFIG_PATHS['artists'])
+notified_albums_handler = NotifiedAlbumsHandler(CONFIG_PATHS['notified'])
 
 def generate_vibrant_color():
     """Generate a vibrant color using HSV color space"""
