@@ -2,7 +2,6 @@ import os
 import json
 import time
 from datetime import datetime
-import schedule
 import requests
 from dotenv import load_dotenv
 import logging
@@ -10,6 +9,7 @@ import random
 import colorsys
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+from croniter import croniter, CroniterNotAlphaError, CroniterBadCronError
 
 # Set up logging with more detailed format
 logging.basicConfig(
@@ -162,7 +162,16 @@ def load_config() -> tuple:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    logger.info(f"Configuration loaded successfully. Update interval: {required_vars['UPDATE_INTERVAL']}")
+    # Validate cron expression
+    try:
+        if not croniter.is_valid(required_vars['UPDATE_INTERVAL']):
+            raise ValueError("Invalid cron expression")
+        logger.info(f"Configuration loaded successfully. Update interval (cron): {required_vars['UPDATE_INTERVAL']}")
+    except (CroniterNotAlphaError, CroniterBadCronError) as e:
+        error_msg = f"Invalid cron expression in UPDATE_INTERVAL: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
     return "/music", required_vars['UPDATE_INTERVAL'], required_vars['DISCORD_WEBHOOK'], os.getenv('DISCORD_ROLE')
 
 def make_musicbrainz_request(url: str, params: Dict, rate_limiter: RateLimiter) -> Optional[Dict]:
@@ -303,7 +312,6 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
 
 def check_year_change() -> None:
     """Check if the year has changed and clear notified.json if needed"""
-    logger.info("Checking for year change...")
     data = safe_read_json(NOTIFIED_FILE_PATH)
     if not data:
         return
@@ -324,18 +332,18 @@ def check_new_releases() -> None:
     logger.info("Starting consolidated operations check...")
     
     # Step 1: Scan music directory and update artists.json
-    logger.info("Step 1: Updating artist list...")
+    logger.info("Updating artist list...")
     if not is_valid_artists_file():
         if not update_artist_list():
             logger.error("Failed to update artist list")
             return
     
     # Step 2: Check for year change
-    logger.info("Step 2: Checking for year change...")
+    logger.info("Checking for year change...")
     check_year_change()
     
     # Step 3: Check for new releases
-    logger.info("Step 3: Checking for new releases...")
+    logger.info("Checking for new releases...")
     rate_limiter = RateLimiter()
     data = safe_read_json(ARTISTS_FILE_PATH)
     
@@ -407,7 +415,7 @@ def main() -> None:
         ensure_config_directory()
         
         # Step 2: Load environment variables
-        music_path, update_interval, _, _ = load_config()
+        music_path, cron_schedule, _, _ = load_config()
         
         # Step 3: Validate artists.json and perform initial scan if needed
         if not is_valid_artists_file():
@@ -417,19 +425,27 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, skipping initial scan")
         
-        # Step 4: Schedule consolidated operations
-        logger.info(f"Scheduling consolidated operations at {update_interval}")
-        schedule.every().day.at(update_interval).do(check_new_releases)
-        
-        # Step 5: Run initial check
+        # Step 4: Run initial check
         logger.info("Running initial consolidated operations check...")
         check_new_releases()
         
         logger.info("Trackly startup complete")
         
+        # Step 5: Set up cron-based scheduling
+        cron = croniter(cron_schedule, datetime.now())
+        
         while True:
-            schedule.run_pending()
-            time.sleep(60)
+            next_run = cron.get_next(datetime)
+            now = datetime.now()
+            
+            # Sleep until next scheduled run
+            sleep_seconds = (next_run - now).total_seconds()
+            if sleep_seconds > 0:
+                logger.info(f"Sleeping until next scheduled run at {next_run}")
+                time.sleep(sleep_seconds)
+            
+            # Run the consolidated operations
+            check_new_releases()
             
     except Exception as e:
         logger.error(f"Critical error during startup: {str(e)}")

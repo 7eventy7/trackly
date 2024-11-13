@@ -8,7 +8,7 @@ services:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
       - ./config:/config  # Persistent storage for config
     environment:
-      - UPDATE_INTERVAL=00:00  # Default to midnight
+      - UPDATE_INTERVAL=0 0 * * *  # Default to midnight (cron format: minute hour day month weekday)
       - DISCORD_WEBHOOK=  # Set this to your Discord webhook URL
       - DISCORD_ROLE=  # Set this to your Discord role ID to ping
     restart: unless-stopped
