@@ -253,6 +253,8 @@ def check_new_releases():
             continue
             
         logger.info(f"Checking releases for artist: {artist['name']}")
+        new_releases_found = False
+        
         try:
             url = f"{MUSICBRAINZ_BASE_URL}/release-group"
             params = {
@@ -283,21 +285,23 @@ def check_new_releases():
                             'release_date': release_date
                         }
                         
-                        # First update the notified albums JSON
-                        notified_albums_handler.add_notified_album(artist['name'], album_title, release_date)
-                        logger.info(f"Added {album_title} to notified albums")
-                        
-                        # Then send the Discord notification
+                        # First try to send the Discord notification
                         if send_discord_notification(release_info, artist.get('color')):
-                            # Add delay after successful notification
-                            logger.info(f"Waiting 10 minutes before checking next release...")
-                            time.sleep(600)  # 10 minutes delay
+                            # Only add to notified albums if notification was successful
+                            notified_albums_handler.add_notified_album(artist['name'], album_title, release_date)
+                            logger.info(f"Added {album_title} to notified albums")
+                            new_releases_found = True
                         else:
-                            logger.error(f"Failed to send Discord notification for {album_title}")
-                        
+                            logger.error(f"Failed to send Discord notification for {album_title}, skipping notification record")
+                            
                 except Exception as e:
                     logger.error(f"Error processing release for {artist['name']}: {str(e)}")
                     continue
+            
+            # Add delay after processing all releases for this artist if any new releases were found
+            if new_releases_found:
+                logger.info(f"Waiting 10 minutes before checking next artist...")
+                time.sleep(600)  # 10 minutes delay
                     
         except Exception as e:
             logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
