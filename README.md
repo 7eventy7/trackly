@@ -52,20 +52,11 @@ docker-compose up -d
 ### Environment Variables
 - `DISCORD_WEBHOOK`: Your Discord webhook URL (required)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
-- `UPDATE_INTERVAL`: Time to check for updates (e.g., "12:00")
+- `UPDATE_INTERVAL`: Time to check for updates (cron schedule)
 
 ### Volumes
 - `/music`: Mount your music directory here
 - `/config`: Persistent storage for application data
-
-## 🔄 Docker Hub Updates
-
-Trackly is automatically published to Docker Hub when a new release is created. Images are tagged with both the specific version number and 'latest'.
-
-To use the latest version from Docker Hub:
-```bash
-docker pull 7eventy7/trackly:latest
-```
 
 ## 🛠️ Technical Stack
 
