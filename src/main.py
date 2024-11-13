@@ -223,13 +223,16 @@ def add_notified_album(artist, album, release_date):
         logger.error(f"Error adding notified album: {str(e)}")
 
 def send_discord_notification(release_info, artist_color):
-    """Send a Discord webhook notification about new releases"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
     
     logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
     
     formatted_date = format_release_date(release_info['release_date'])
+    
+    # Add this debug log to verify role formatting
+    role_mention = f"<@&{discord_role}>" if discord_role else ""
+    logger.debug(f"Role mention formatted as: {role_mention}")
     
     embed = {
         "title": "New Album Release!",
@@ -240,10 +243,8 @@ def send_discord_notification(release_info, artist_color):
         }
     }
     
-    # Create the payload with role mention if available
-    content = f"<@&{discord_role}>" if discord_role else ""
     payload = {
-        "content": content,
+        "content": role_mention,  # Using the verified role mention
         "embeds": [embed]
     }
     
