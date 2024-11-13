@@ -50,9 +50,10 @@ docker-compose up -d
 ## ⚙️ Configuration
 
 ### Environment Variables
+- `UPDATE_INTERVAL`: Cron schedule to check for releases (required)
 - `DISCORD_WEBHOOK`: Your Discord webhook URL (required)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
-- `UPDATE_INTERVAL`: Time to check for updates (cron schedule)
+
 
 ### Volumes
 - `/music`: Mount your music directory here
