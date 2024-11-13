@@ -92,7 +92,7 @@ We're always looking for ways to make Trackly better! If you have an idea for a 
    - Any technical considerations?
 4. Engage with the community in the discussion
 
-Your feature requests help shape the future of Trackly. No suggestion is too small - we appreciate all input from our community!
+Your feature requests help shape the future of Trackly. No suggestion is too small - we appreciate all input!
 
 ## 📝 License
 
