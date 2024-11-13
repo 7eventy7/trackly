@@ -2,15 +2,17 @@
 
 > Track your favorite artists' new releases with Discord notifications
 
-Trackly is a Docker container that monitors your music library and notifies you about new releases from your favorite artists via Discord webhooks. The application scans a specified music directory for artist folders and tracks new releases using the Discogs API.
+Trackly is a Docker container that monitors your music library and notifies you about new releases from your favorite artists via Discord webhooks. The application scans a specified music directory for artist folders and tracks new releases using the MusicBrainz API.
 
 ## ✨ Features
 
 - 📁 **Smart Directory Monitoring** - Watches your local music directory for artist folders
-- 🎵 **Release Tracking** - Tracks new releases (albums, EPs, and singles) from your artists
+- 🎵 **Release Tracking** - Tracks new album releases from your artists using MusicBrainz API
 - 🔔 **Discord Integration** - Sends beautiful Discord notifications for new releases
 - 🤖 **Automated Updates** - Automatic periodic checks based on your schedule
 - 🔄 **Real-time Updates** - Instant updates when new artists are added to the music folder
+- 🚦 **Smart Rate Limiting** - Respects MusicBrainz API rate limits with exponential backoff
+- 🎯 **Year-Specific Tracking** - Only tracks releases from the current year
 
 ## 📋 Prerequisites
 
@@ -115,11 +117,24 @@ docker-compose up -d --build
 
 The bot sends beautiful Discord notifications with:
 
-- 📀 Release type (Album, EP, or Single)
 - 👤 Artist name
-- 🎵 Release name
+- 🎵 Album name
 - 📅 Release date
-- 🖼️ Album artwork thumbnail
+
+## 🔄 How It Works
+
+1. **Artist Discovery**: Scans your music directory for artist folders
+2. **MusicBrainz Integration**:
+   - Searches for artists on MusicBrainz
+   - Stores artist IDs for efficient lookups
+   - Checks for new album releases from the current year
+3. **Smart Rate Limiting**:
+   - Implements adaptive delays between requests
+   - Uses exponential backoff for failed requests
+   - Adds random jitter to prevent request clustering
+4. **Local Library Check**:
+   - Compares new releases with your local music folders
+   - Only notifies for albums you don't have
 
 ## 📊 Monitoring and Logs
 
