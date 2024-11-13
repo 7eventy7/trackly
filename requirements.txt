@@ -1,4 +1,4 @@
 python-dotenv==1.0.0
-requests==2.31.0
+requests==2.32.0
 typing-extensions==4.9.0
 croniter==2.0.1
