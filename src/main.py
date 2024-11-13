@@ -310,23 +310,33 @@ def check_new_releases():
                     album_folder = os.path.join(artist_folder, album_title)
                     
                     if not os.path.exists(album_folder) and not is_album_notified(artist['name'], album_title):
-                        logger.info(f"Found new album for {artist['name']}: {album_title}")
-                        release_info = {
-                            'artist': artist['name'],
-                            'title': album_title,
-                            'release_date': release_date
-                        }
-                        send_discord_notification(release_info, artist.get('color', generate_vibrant_color()))
-                        add_notified_album(artist['name'], album_title, release_date)
+                        try:
+                            logger.info(f"Found new album for {artist['name']}: {album_title}")
+                            release_info = {
+                                'artist': artist['name'],
+                                'title': album_title,
+                                'release_date': release_date
+                            }
+                            
+                            # Debug prints
+                            print(f"Release Info: {release_info}")
+                            print(f"Artist Color: {artist.get('color')}")
+                            
+                            # Call notification with explicit error handling
+                            send_discord_notification(release_info, artist['color'])  # Use direct color access
+                            add_notified_album(artist['name'], album_title, release_date)
+                        except Exception as e:
+                            logger.error(f"Error in notification process: {e}")
+                            import traceback
+                            print(traceback.format_exc())  # This will print the full error stack
+                            continue
                         
                 except Exception as e:
-                    # CHANGE THIS LINE
-                    logger.error(f"Error processing release for {artist['name']}: {str(e)}")  # Changed from .format() to f-string
+                    logger.error(f"Error processing release for {artist['name']}: {str(e)}")
                     continue
                     
         except Exception as e:
-            # AND THIS LINE
-            logger.error(f"Error checking releases for {artist['name']}: {str(e)}")  # Changed from .format() to f-string
+            logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
             continue
     
     logger.info("Completed release check for all artists")
