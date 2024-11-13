@@ -187,8 +187,7 @@ def format_release_date(date_str):
     """Format release date to a more readable format"""
     try:
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        return date_obj.strftime('%B %d%s, %Y') % ('th' if 4 <= date_obj.day <= 20 or 24 <= date_obj.day <= 30
-                                                  else ['st', 'nd', 'rd'][date_obj.day % 10 - 1])
+        return date_obj.strftime('%B %d, %Y')  # Simplified date format to avoid string formatting issues
     except ValueError:
         return date_str  # Return original string if parsing fails
 
@@ -223,28 +222,34 @@ def add_notified_album(artist, album, release_date):
         logger.error(f"Error adding notified album: {str(e)}")
 
 def send_discord_notification(release_info, artist_color):
+    """Send Discord notification for new release"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
     
     logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
     
+    # Ensure we have a valid color value (default to purple if invalid)
+    try:
+        color = int(artist_color) if artist_color is not None else 0x9B59B6
+    except (ValueError, TypeError):
+        color = 0x9B59B6  # Default to purple if color is invalid
+    
     formatted_date = format_release_date(release_info['release_date'])
     
-    # Add this debug log to verify role formatting
+    # Format role mention only if discord_role is provided
     role_mention = f"<@&{discord_role}>" if discord_role else ""
-    logger.debug(f"Role mention formatted as: {role_mention}")
     
     embed = {
         "title": "New Album Release!",
         "description": f"{release_info['artist']}\n> {release_info['title']}",
-        "color": artist_color,
+        "color": color,
         "footer": {
             "text": f"Release Date: {formatted_date}"
         }
     }
     
     payload = {
-        "content": role_mention,  # Using the verified role mention
+        "content": role_mention,
         "embeds": [embed]
     }
     
@@ -252,7 +257,6 @@ def send_discord_notification(release_info, artist_color):
         response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
         logger.info("Discord notification sent successfully")
-        # Add 10-minute delay after successful notification
         time.sleep(600)  # 600 seconds = 10 minutes
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
@@ -310,26 +314,15 @@ def check_new_releases():
                     album_folder = os.path.join(artist_folder, album_title)
                     
                     if not os.path.exists(album_folder) and not is_album_notified(artist['name'], album_title):
-                        try:
-                            logger.info(f"Found new album for {artist['name']}: {album_title}")
-                            release_info = {
-                                'artist': artist['name'],
-                                'title': album_title,
-                                'release_date': release_date
-                            }
-                            
-                            # Debug prints
-                            print(f"Release Info: {release_info}")
-                            print(f"Artist Color: {artist.get('color')}")
-                            
-                            # Call notification with explicit error handling
-                            send_discord_notification(release_info, artist['color'])  # Use direct color access
-                            add_notified_album(artist['name'], album_title, release_date)
-                        except Exception as e:
-                            logger.error(f"Error in notification process: {e}")
-                            import traceback
-                            print(traceback.format_exc())  # This will print the full error stack
-                            continue
+                        logger.info(f"Found new album for {artist['name']}: {album_title}")
+                        release_info = {
+                            'artist': artist['name'],
+                            'title': album_title,
+                            'release_date': release_date
+                        }
+                        
+                        send_discord_notification(release_info, artist.get('color'))
+                        add_notified_album(artist['name'], album_title, release_date)
                         
                 except Exception as e:
                     logger.error(f"Error processing release for {artist['name']}: {str(e)}")
