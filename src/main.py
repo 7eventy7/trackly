@@ -319,11 +319,13 @@ def check_new_releases():
                         add_notified_album(artist['name'], album_title, release_date)
                         
                 except Exception as e:
-                    logger.error("Error processing release for {}: {}".format(artist['name'], str(e)))
+                    # CHANGE THIS LINE
+                    logger.error(f"Error processing release for {artist['name']}: {str(e)}")  # Changed from .format() to f-string
                     continue
                     
         except Exception as e:
-            logger.error("Error checking releases for {}: {}".format(artist['name'], str(e)))
+            # AND THIS LINE
+            logger.error(f"Error checking releases for {artist['name']}: {str(e)}")  # Changed from .format() to f-string
             continue
     
     logger.info("Completed release check for all artists")
