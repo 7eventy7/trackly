@@ -13,6 +13,9 @@ Trackly is a Docker container that monitors your music library and notifies you 
 - 🔄 **Real-time Updates** - Instant updates when new artists are added to the music folder
 - 🚦 **Smart Rate Limiting** - Respects MusicBrainz API rate limits with exponential backoff
 - 🎯 **Year-Specific Tracking** - Only tracks releases from the current year
+- 💾 **Robust File Management** - Safe file operations with validation and error handling
+- 📊 **Detailed Logging** - Comprehensive logging with file and line information
+- 🔒 **Data Validation** - Thorough validation of configuration and data files
 
 ## 📋 Prerequisites
 
@@ -30,6 +33,14 @@ Music/
 ├── Artist2/
 ├── Artist3/
 └── ...
+```
+
+The application maintains its configuration in a dedicated config directory:
+
+```
+config/
+├── artists.json      # Stores artist information and MusicBrainz IDs
+└── notified.json     # Keeps track of notified albums
 ```
 
 ## 🚀 Quick Start with Docker Hub
@@ -82,6 +93,7 @@ services:
     image: yourusername/trackly:latest
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro
+      - ./config:/config
     environment:
       - MUSIC_PATH=/music
       - UPDATE_INTERVAL=${UPDATE_INTERVAL:-"00:00"}
@@ -123,18 +135,33 @@ The bot sends beautiful Discord notifications with:
 
 ## 🔄 How It Works
 
-1. **Artist Discovery**: Scans your music directory for artist folders
-2. **MusicBrainz Integration**:
-   - Searches for artists on MusicBrainz
-   - Stores artist IDs for efficient lookups
-   - Checks for new album releases from the current year
-3. **Smart Rate Limiting**:
+1. **Startup Sequence**:
+   - Validates config directory and creates if needed
+   - Checks for existing configuration files
+   - Performs initial artist scan if necessary
+   - Sets up file monitoring and scheduled checks
+
+2. **Artist Discovery**:
+   - Scans your music directory for artist folders
+   - Safely updates artists.json with validation
+   - Stores artist IDs and custom colors
+
+3. **Release Tracking**:
+   - Efficiently checks for new releases
+   - Validates data before processing
+   - Maintains proper file structure
+   - Implements safe write operations
+
+4. **Smart Rate Limiting**:
    - Implements adaptive delays between requests
    - Uses exponential backoff for failed requests
    - Adds random jitter to prevent request clustering
-4. **Local Library Check**:
-   - Compares new releases with your local music folders
-   - Only notifies for albums you don't have
+
+5. **File Management**:
+   - Safe file operations with validation
+   - Proper error handling and recovery
+   - Maintains data integrity
+   - Prevents duplicate notifications
 
 ## 📊 Monitoring and Logs
 
@@ -178,6 +205,9 @@ ls -l $MUSIC_PATH
 
 # Check container logs
 docker-compose logs
+
+# Verify config directory
+ls -l config/
 ```
 
 ## 📄 License
