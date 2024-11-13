@@ -329,7 +329,7 @@ def check_year_change() -> None:
 
 def check_new_releases() -> None:
     """Check for new releases from tracked artists with consolidated operations"""
-    logger.info("Starting consolidated operations check...")
+    logger.info("Starting the cron update...")
     
     # Step 1: Scan music directory and update artists.json
     logger.info("Updating artist list...")
@@ -404,7 +404,7 @@ def check_new_releases() -> None:
             logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
             continue
     
-    logger.info("Completed consolidated operations check")
+    logger.info("Completed the cron update")
 
 def main() -> None:
     """Main function to run the artist tracker with startup sequence for configuration only"""
