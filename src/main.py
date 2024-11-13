@@ -26,7 +26,7 @@ NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
 MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
 USER_AGENT: str = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
-FILE_CHECK_INTERVAL: int = 600  # 10 minutes in seconds
+FILE_CHECK_INTERVAL: int = 480
 MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
 
@@ -208,7 +208,6 @@ def load_config() -> Tuple[str, str, str, Optional[str], bool]:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    # Get optional NOTIFY_ON_SCAN environment variable
     notify_on_scan = os.getenv('NOTIFY_ON_SCAN', 'false').lower() == 'true'
 
     return (
@@ -481,7 +480,6 @@ def main() -> None:
         ensure_config_directory()
         music_path, cron_schedule, webhook_url, discord_role, notify_on_scan = load_config()
         
-        # Handle first-time startup notification
         if is_first_startup():
             send_startup_notification(webhook_url, discord_role)
             mark_startup_complete()
