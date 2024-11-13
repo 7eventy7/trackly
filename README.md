@@ -70,6 +70,30 @@ docker-compose up -d
 - Logging
 - JSON
 
+## 👥 Contributing
+
+We love your input! We want to make contributing to Trackly as easy and transparent as possible, whether it's:
+
+- 💡 Suggesting new features
+- 🐛 Reporting a bug
+- 📝 Improving documentation
+- 🔍 Submitting bug fixes
+- ✨ Proposing new features
+
+### Feature Requests
+
+We're always looking for ways to make Trackly better! If you have an idea for a new feature:
+
+1. Check the [GitHub Issues](https://github.com/7eventy7/trackly/issues) to see if it's already been suggested
+2. If not, create a new issue with the label `feature request`
+3. Describe your feature idea in detail:
+   - What problem does it solve?
+   - How would it work?
+   - Any technical considerations?
+4. Engage with the community in the discussion
+
+Your feature requests help shape the future of Trackly. No suggestion is too small - we appreciate all input from our community!
+
 ## 📝 License
 
 MIT License - feel free to use this project for any purpose.
