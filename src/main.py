@@ -9,6 +9,7 @@ from watchdog.events import FileSystemEventHandler
 from dotenv import load_dotenv
 import logging
 import random
+import colorsys
 
 # Set up logging
 logging.basicConfig(
@@ -19,8 +20,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 CONFIG_PATH = "/config/artists.json"
+NOTIFIED_ALBUMS_PATH = "/config/notified_albums.json"
 MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2"
 USER_AGENT = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
+
+def generate_vibrant_color():
+    """Generate a vibrant color using HSV color space"""
+    # Generate random hue (0-360)
+    hue = random.random()
+    # High saturation (70-100%)
+    saturation = random.uniform(0.7, 1.0)
+    # High value (80-100%)
+    value = random.uniform(0.8, 1.0)
+    
+    # Convert HSV to RGB
+    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+    
+    # Convert RGB to hex color code for Discord (0x000000 to 0xFFFFFF)
+    color = int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
+    
+    return color
 
 class RateLimiter:
     def __init__(self, min_delay=1.0, max_delay=3.0):
@@ -72,6 +91,7 @@ def load_config():
     """Load environment variables"""
     update_interval = os.getenv('UPDATE_INTERVAL')
     discord_webhook = os.getenv('DISCORD_WEBHOOK')
+    discord_role = os.getenv('DISCORD_ROLE')
 
     logger.info("Loading configuration...")
     if not all([update_interval, discord_webhook]):
@@ -85,7 +105,7 @@ def load_config():
     logger.info(f"Configuration loaded successfully. Update interval set to: {update_interval}")
     music_path = "/music"
 
-    return music_path, update_interval, discord_webhook
+    return music_path, update_interval, discord_webhook, discord_role
 
 def make_musicbrainz_request(url, params, rate_limiter):
     """Make a rate-limited request to MusicBrainz API"""
@@ -138,13 +158,15 @@ def update_artist_list():
             if artist_id:
                 artists.append({
                     'name': artist_name,
-                    'id': artist_id
+                    'id': artist_id,
+                    'color': generate_vibrant_color()  # Generate unique vibrant color for artist
                 })
             else:
                 logger.warning(f"Could not find MusicBrainz ID for {artist_name}")
                 artists.append({
                     'name': artist_name,
-                    'id': None
+                    'id': None,
+                    'color': generate_vibrant_color()  # Generate unique vibrant color even if no ID
                 })
         
         logger.info(f"Found {len(artists)} artists in music directory")
@@ -161,25 +183,76 @@ def update_artist_list():
         logger.error(f"Error updating artist list: {str(e)}")
         raise
 
-def send_discord_notification(release_info):
+def format_release_date(date_str):
+    """Format release date to a more readable format"""
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        return date_obj.strftime('%B %d%s, %Y') % ('th' if 4 <= date_obj.day <= 20 or 24 <= date_obj.day <= 30
+                                                  else ['st', 'nd', 'rd'][date_obj.day % 10 - 1])
+    except ValueError:
+        return date_str  # Return original string if parsing fails
+
+def is_album_notified(artist, album):
+    """Check if an album has already been notified"""
+    try:
+        with open(NOTIFIED_ALBUMS_PATH, 'r') as f:
+            data = json.load(f)
+            return any(n['artist'] == artist and n['album'] == album for n in data['notified_albums'])
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+
+def add_notified_album(artist, album, release_date):
+    """Add an album to the notified albums list"""
+    try:
+        try:
+            with open(NOTIFIED_ALBUMS_PATH, 'r') as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {'notified_albums': []}
+        
+        data['notified_albums'].append({
+            'artist': artist,
+            'album': album,
+            'release_date': release_date,
+            'notified_at': datetime.now().isoformat()
+        })
+        
+        with open(NOTIFIED_ALBUMS_PATH, 'w') as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error adding notified album: {str(e)}")
+
+def send_discord_notification(release_info, artist_color):
     """Send a Discord webhook notification about new releases"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
+    discord_role = os.getenv('DISCORD_ROLE')
     
     logger.info(f"Sending Discord notification for {release_info['artist']} - {release_info['title']}")
     
+    formatted_date = format_release_date(release_info['release_date'])
+    
     embed = {
-        "title": f"New Album Release!",
-        "description": f"Artist: {release_info['artist']}\n"
-                      f"Album: {release_info['title']}\n"
-                      f"Release Date: {release_info['release_date']}",
-        "color": 3447003  # Blue color
+        "title": "New Album Release!",
+        "description": f"{release_info['artist']}\n> {release_info['title']}",
+        "color": artist_color,
+        "footer": {
+            "text": f"Release Date: {formatted_date}"
+        }
     }
     
-    payload = {"embeds": [embed]}
+    # Create the payload with role mention if available
+    content = f"<@&{discord_role}>" if discord_role else ""
+    payload = {
+        "content": content,
+        "embeds": [embed]
+    }
+    
     try:
         response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
         logger.info("Discord notification sent successfully")
+        # Add 10-minute delay after successful notification
+        time.sleep(600)  # 600 seconds = 10 minutes
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
 
@@ -235,14 +308,15 @@ def check_new_releases():
                     artist_folder = os.path.join('/music', artist['name'])
                     album_folder = os.path.join(artist_folder, album_title)
                     
-                    if not os.path.exists(album_folder):
+                    if not os.path.exists(album_folder) and not is_album_notified(artist['name'], album_title):
                         logger.info(f"Found new album for {artist['name']}: {album_title}")
                         release_info = {
                             'artist': artist['name'],
                             'title': album_title,
                             'release_date': release_date
                         }
-                        send_discord_notification(release_info)
+                        send_discord_notification(release_info, artist.get('color', generate_vibrant_color()))
+                        add_notified_album(artist['name'], album_title, release_date)
                         
                 except Exception as e:
                     logger.error(f"Error processing release for {artist['name']}: {e}")
@@ -259,11 +333,12 @@ def main():
     logger.info("Starting Trackly...")
     
     # Load environment variables
-    music_path, update_interval, _ = load_config()
+    music_path, update_interval, _, _ = load_config()
     
     # Make sure config directory exists
     try:
         os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
+        os.makedirs(os.path.dirname(NOTIFIED_ALBUMS_PATH), exist_ok=True)
         logger.info(f"Config directory ensured at {os.path.dirname(CONFIG_PATH)}")
     except Exception as e:
         logger.error(f"Failed to create config directory: {str(e)}")

@@ -10,5 +10,6 @@ services:
     environment:
       - UPDATE_INTERVAL=00:00  # Default to midnight
       - DISCORD_WEBHOOK=  # Set this to your Discord webhook URL
+      - DISCORD_ROLE=  # Set this to your Discord role ID to ping
     restart: unless-stopped
     container_name: trackly
