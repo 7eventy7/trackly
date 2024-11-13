@@ -407,7 +407,7 @@ def check_new_releases() -> None:
     logger.info("Completed consolidated operations check")
 
 def main() -> None:
-    """Main function to run the artist tracker with improved startup sequence"""
+    """Main function to run the artist tracker with startup sequence for configuration only"""
     logger.info("Starting Trackly...")
     
     try:
@@ -425,13 +425,9 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, skipping initial scan")
         
-        # Step 4: Run initial check
-        logger.info("Running initial consolidated operations check...")
-        check_new_releases()
+        logger.info("Trackly startup complete - configuration validated")
         
-        logger.info("Trackly startup complete")
-        
-        # Step 5: Set up cron-based scheduling
+        # Step 4: Set up cron-based scheduling
         cron = croniter(cron_schedule, datetime.now())
         
         while True:
