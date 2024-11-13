@@ -219,7 +219,6 @@ def send_discord_notification(release_info, artist_color, max_retries=3):
             response = requests.post(webhook_url, json=payload, timeout=10)
             response.raise_for_status()
             logger.info("Discord notification sent successfully")
-            time.sleep(2)  # Reduced delay between notifications
             return True
         except requests.exceptions.RequestException as e:
             logger.warning(f"Failed to send Discord notification (attempt {attempt + 1}/{max_retries}): {str(e)}")
@@ -284,8 +283,17 @@ def check_new_releases():
                             'release_date': release_date
                         }
                         
+                        # First update the notified albums JSON
+                        notified_albums_handler.add_notified_album(artist['name'], album_title, release_date)
+                        logger.info(f"Added {album_title} to notified albums")
+                        
+                        # Then send the Discord notification
                         if send_discord_notification(release_info, artist.get('color')):
-                            notified_albums_handler.add_notified_album(artist['name'], album_title, release_date)
+                            # Add delay after successful notification
+                            logger.info(f"Waiting 10 minutes before checking next release...")
+                            time.sleep(600)  # 10 minutes delay
+                        else:
+                            logger.error(f"Failed to send Discord notification for {album_title}")
                         
                 except Exception as e:
                     logger.error(f"Error processing release for {artist['name']}: {str(e)}")
