@@ -9,7 +9,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/7eventy7/trackly.svg)](https://hub.docker.com/r/7eventy7/trackly)
 [![License](https://img.shields.io/github/license/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/blob/main/LICENSE)
 
-A powerful Python application that monitors your music library and notifies you about new album releases from your favorite artists through Discord. Stay updated with the latest releases from artists in your collection.
+A powerful python application that monitors your music library and notifies you about new album releases from your favorite artists through discord. Stay updated with the latest releases from artists in your collection.
 
 </div>
 
