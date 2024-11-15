@@ -9,7 +9,6 @@ services:
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
       - ./config:/config  # Persistent storage for config
-      - ./backend:/app/backend  # Mount backend directory
     environment:
       - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
       - DISCORD_WEBHOOK=  # Set this to your discord webhook url for embeds
