@@ -45,7 +45,7 @@ RUN echo 'import multiprocessing\n\
 \n\
 # Gunicorn configuration\n\
 bind = "0.0.0.0:11888"\n\
-workers = multiprocessing.cpu_count() * 2 + 1\n\
+workers = 1\n\
 worker_class = "gthread"\n\
 threads = 4\n\
 timeout = 120\n\
