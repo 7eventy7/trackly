@@ -23,13 +23,17 @@ logger = logging.getLogger(__name__)
 DATA_DIR = "/data"
 MUSIC_DIR = "/music"
 ARTISTS_FILE_PATH: str = os.path.join(DATA_DIR, "artists.json")
-NOTIFIED_FILE_PATH: str = os.path.join(DATA_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(DATA_DIR, "startup.json")
 MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
 USER_AGENT: str = "Trackly/1.0.0 ( https://github.com/7eventy7/trackly )"
 FILE_CHECK_INTERVAL: int = 480
 MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
+
+def get_notified_file_path() -> str:
+    """Get the current year's notified file path"""
+    current_year = datetime.now().year
+    return os.path.join(DATA_DIR, f"notified_{current_year}.json")
 
 # 1. Environment Setup Functions
 def ensure_config_directory() -> None:
@@ -329,7 +333,8 @@ def format_release_date(date_str: str) -> str:
 
 def is_album_notified(artist: str, album: str) -> bool:
     """Check if an album has already been notified"""
-    data = safe_read_json(NOTIFIED_FILE_PATH)
+    notified_file = get_notified_file_path()
+    data = safe_read_json(notified_file)
     if not data:
         return False
     
@@ -339,7 +344,8 @@ def is_album_notified(artist: str, album: str) -> bool:
 def add_notified_album(artist: str, album: str, release_date: str) -> bool:
     """Add an album to the notified albums list with validation"""
     try:
-        data = safe_read_json(NOTIFIED_FILE_PATH) or {'notified_albums': []}
+        notified_file = get_notified_file_path()
+        data = safe_read_json(notified_file) or {'notified_albums': []}
         
         data['notified_albums'].append({
             'artist': artist,
@@ -348,7 +354,7 @@ def add_notified_album(artist: str, album: str, release_date: str) -> bool:
             'notified_at': datetime.now().isoformat()
         })
         
-        return safe_write_json(NOTIFIED_FILE_PATH, data)
+        return safe_write_json(notified_file, data)
     except Exception as e:
         logger.error(f"Error adding notified album: {str(e)}")
         return False
@@ -404,20 +410,24 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
 
 def check_year_change() -> None:
     """Check if the year has changed and create new notified-<year>.json if needed"""
-    data = safe_read_json(NOTIFIED_FILE_PATH)
+    current_year = datetime.now().year
+    notified_file = get_notified_file_path()
+    
+    if not os.path.exists(notified_file):
+        logger.info(f"Creating new notified_{current_year}.json")
+        safe_write_json(notified_file, {'notified_albums': []})
+        return
+
+    data = safe_read_json(notified_file)
     if not data:
         return
 
     try:
-        current_year = datetime.now().year
         for album in data.get('notified_albums', []):
             notified_at = datetime.fromisoformat(album['notified_at'])
             if notified_at.year < current_year:
-                logger.info(f"Year has changed, creating new notified-{current_year}.json")
-                new_file_path = os.path.join(DATA_DIR, f"notified-{current_year}.json")
-                safe_write_json(new_file_path, {'notified_albums': []})
-                global NOTIFIED_FILE_PATH
-                NOTIFIED_FILE_PATH = new_file_path
+                logger.info(f"Year has changed, creating new notified_{current_year}.json")
+                safe_write_json(notified_file, {'notified_albums': []})
                 break
     except Exception as e:
         logger.error(f"Error checking year change: {str(e)}")

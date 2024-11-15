@@ -29,10 +29,7 @@ function getOnlineFallbackImage(artistName: string): string {
 
 async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
   try {
-    const fileName = year === new Date().getFullYear() 
-      ? 'notified.json' 
-      : `notified${year}.json`;
-    
+    const fileName = `notified_${year}.json`;
     const response = await fetch(`/data/${fileName}`);
     if (!response.ok) {
       if (response.status === 404) {
@@ -89,19 +86,6 @@ export async function loadArtistsConfig() {
   } catch (error) {
     console.error('Error loading artists config:', error);
     return [];
-  }
-}
-
-export async function loadNotifiedConfig() {
-  try {
-    const response = await fetch('/data/notified.json');
-    if (!response.ok) {
-      throw new Error('Failed to load notified config');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error loading notified config:', error);
-    return { notified_albums: [] };
   }
 }
 

@@ -69,7 +69,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
         </h3>
       </div>
       <div 
-        className="absolute inset-0 rounded-lg ring-2 ring-inset"
+        className="absolute inset-0 rounded-lg border-2"
         style={borderStyle}
       />
     </Link>
