@@ -62,6 +62,16 @@ loglevel = "info"\n\
 proc_name = "trackly"\n\
 ' > /app/gunicorn.conf.py
 
+# Create entrypoint script to handle permissions at runtime
+RUN echo '#!/bin/sh\n\
+# Ensure correct permissions for config directory\n\
+chown -R myuser:myuser /config\n\
+chmod -R 755 /config\n\
+\n\
+# Switch to myuser and run the application\n\
+exec su -s /bin/sh myuser -c "gunicorn --config /app/gunicorn.conf.py python.wsgi:app"\n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # Expose the port
 EXPOSE 11888
 
@@ -70,14 +80,13 @@ LABEL maintainer="7eventy7"
 LABEL version="1.0"
 LABEL description="Trackly - Music tracking application"
 
-# Create a non-root user and switch to it
+# Create a non-root user
 RUN useradd -m myuser
-RUN chown -R myuser:myuser /app /music /config
-USER myuser
+RUN chown -R myuser:myuser /app /music
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:11888/ || exit 1
 
-# Set the default command to run gunicorn
-CMD ["gunicorn", "--config", "/app/gunicorn.conf.py", "python.wsgi:app"]
+# Set the entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
