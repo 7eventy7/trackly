@@ -17,17 +17,21 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install curl for healthcheck
+# Install system dependencies including Nginx
 RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y \
+    curl \
+    nginx \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create necessary directories
-RUN mkdir -p /app/python /app/static /music /config
+RUN mkdir -p /app/python /app/static /music /config /run/nginx
 
 # Copy Python source code
 COPY frontend/python/*.py /app/python/
@@ -35,43 +39,44 @@ COPY frontend/python/*.py /app/python/
 # Copy built frontend from frontend-builder stage
 COPY --from=frontend-builder /app/frontend/dist/ /app/static/
 
+# Copy Nginx configuration
+COPY config/nginx.conf /etc/nginx/nginx.conf
+
+# Create uwsgi config file
+RUN echo '[uwsgi]\n\
+socket = /tmp/uwsgi.sock\n\
+chown-socket = myuser:myuser\n\
+chmod-socket = 664\n\
+processes = 4\n\
+threads = 2\n\
+master = true\n\
+vacuum = true\n\
+die-on-term = true\n\
+module = python.wsgi:app\n\
+buffer-size = 32768\n\
+harakiri = 120\n\
+max-requests = 1000\n\
+pythonpath = /app\n\
+' > /app/uwsgi.ini
+
+# Create entrypoint script
+RUN echo '#!/bin/sh\n\
+\n\
+# Ensure correct permissions\n\
+chown -R myuser:myuser /config /app/static\n\
+chmod -R 755 /config /app/static\n\
+\n\
+# Start Nginx\n\
+nginx\n\
+\n\
+# Start uWSGI as myuser\n\
+exec su -s /bin/sh myuser -c "uwsgi --ini /app/uwsgi.ini"\n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # Set essential system environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV PORT=11888
-
-# Create gunicorn config file
-RUN echo 'import multiprocessing\n\
-\n\
-# Gunicorn configuration\n\
-bind = "0.0.0.0:11888"\n\
-workers = 1\n\
-worker_class = "gthread"\n\
-threads = 4\n\
-timeout = 120\n\
-keepalive = 5\n\
-max_requests = 1000\n\
-max_requests_jitter = 50\n\
-\n\
-# Logging\n\
-accesslog = None  # Disable access log\n\
-errorlog = None  # Disable error log\n\
-loglevel = "error"  # Only show critical errors from gunicorn\n\
-capture_output = True  # Capture application stdout/stderr\n\
-\n\
-# Process naming\n\
-proc_name = "trackly"\n\
-' > /app/gunicorn.conf.py
-
-# Create entrypoint script to handle permissions at runtime
-RUN echo '#!/bin/sh\n\
-# Ensure correct permissions for config directory\n\
-chown -R myuser:myuser /config\n\
-chmod -R 755 /config\n\
-\n\
-# Switch to myuser and run the application\n\
-exec su -s /bin/sh myuser -c "gunicorn --config /app/gunicorn.conf.py python.wsgi:app"\n\
-' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Expose the port
 EXPOSE 11888
