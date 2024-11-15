@@ -19,8 +19,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration Constants
-CONFIG_DIR: str = "../public/config"  # Updated path to frontend/public/config
+# Get the absolute path to the config directory
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+CONFIG_DIR = str(PROJECT_ROOT / "public" / "config")
 ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
@@ -40,6 +42,7 @@ def ensure_config_directory() -> None:
         logger.error(f"Failed to create config directory: {str(e)}")
         raise
 
+# Rest of the file remains unchanged
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
     """Safely read and parse a JSON file with proper error handling"""
     try:
