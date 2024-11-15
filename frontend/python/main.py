@@ -19,12 +19,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Get the absolute path to the config directory
-# In Docker, this will be /config as mounted in docker-compose.yml
-CONFIG_DIR = str(Path("/config") if os.path.exists("/config") else Path(__file__).resolve().parent.parent / "public" / "config")
-ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
-NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
-STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
+# Get the absolute paths to the data and music directories
+# In Docker, these will be mounted as in docker-compose.yml
+DATA_DIR = "/data"
+MUSIC_DIR = "/music"
+ARTISTS_FILE_PATH: str = os.path.join(DATA_DIR, "artists.json")
+NOTIFIED_FILE_PATH: str = os.path.join(DATA_DIR, "notified.json")
+STARTUP_FILE_PATH: str = os.path.join(DATA_DIR, "startup.json")
 MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
 USER_AGENT: str = "Trackly/1.0.0 ( https://github.com/7eventy7/trackly )"  # Updated User-Agent format
 FILE_CHECK_INTERVAL: int = 480
@@ -32,13 +33,13 @@ MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
 
 def ensure_config_directory() -> None:
-    """Ensure config directory exists and has proper permissions"""
+    """Ensure data directory exists and has proper permissions"""
     try:
-        config_dir = Path(CONFIG_DIR)
-        config_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Config directory ensured at {config_dir}")
+        data_dir = Path(DATA_DIR)
+        data_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Data directory ensured at {data_dir}")
     except Exception as e:
-        logger.error(f"Failed to create config directory: {str(e)}")
+        logger.error(f"Failed to create data directory: {str(e)}")
         raise
 
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
@@ -241,7 +242,7 @@ def load_config() -> Tuple[str, str, str, Optional[str], bool]:
     notify_on_scan = os.getenv('NOTIFY_ON_SCAN', 'false').lower() == 'true'
 
     return (
-        "/music",
+        MUSIC_DIR,
         required_vars['UPDATE_INTERVAL'],
         required_vars['DISCORD_WEBHOOK'],
         os.getenv('DISCORD_ROLE'),
@@ -296,13 +297,12 @@ def get_artist_id(artist_name: str, rate_limiter: RateLimiter) -> Optional[str]:
 def update_artist_list() -> bool:
     """Update the JSON list of artists from the music directory"""
     logger.info("Updating artist list...")
-    music_path = "/music"
     rate_limiter = RateLimiter()
     
     try:
         artists = []
-        for artist_name in [d for d in os.listdir(music_path) 
-                          if os.path.isdir(os.path.join(music_path, d))]:
+        for artist_name in [d for d in os.listdir(MUSIC_DIR) 
+                          if os.path.isdir(os.path.join(MUSIC_DIR, d))]:
             artist_id = get_artist_id(artist_name, rate_limiter)
             artists.append({
                 'name': artist_name,
@@ -434,7 +434,7 @@ def process_release_group(
         return
 
     album_title = release_group['title']
-    artist_folder = os.path.join('/music', artist_name)
+    artist_folder = os.path.join(MUSIC_DIR, artist_name)
     album_folder = os.path.join(artist_folder, album_title)
 
     if not os.path.exists(album_folder) and not is_album_notified(artist_name, album_title):

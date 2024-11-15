@@ -1,6 +1,6 @@
 from flask import Flask, send_from_directory
 import os
-from python.main import main as tracker_main, CONFIG_DIR
+from python.main import main as tracker_main, DATA_DIR, MUSIC_DIR
 import threading
 import multiprocessing
 
@@ -12,13 +12,13 @@ def create_app():
     static_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
     app = Flask(__name__, static_folder=static_folder)
 
-    @app.route("/config/<path:filename>")
-    def serve_config(filename):
-        return send_from_directory(CONFIG_DIR, filename)
+    @app.route("/data/<path:filename>")
+    def serve_data(filename):
+        return send_from_directory(DATA_DIR, filename)
 
     @app.route("/music/<path:path>")
     def serve_music(path):
-        return send_from_directory("/music", path)
+        return send_from_directory(MUSIC_DIR, path)
 
     # Serve static files from the React build
     @app.route("/assets/<path:path>")

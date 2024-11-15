@@ -31,7 +31,7 @@ export function ReleaseFilter({ value, onChange, className }: {
       
       for (let year = 2020; year <= currentYear; year++) {
         try {
-          const response = await fetch(`/config/notified${year}.json`);
+          const response = await fetch(`/data/notified${year}.json`);
           if (response.ok) {
             years.push(year);
           }

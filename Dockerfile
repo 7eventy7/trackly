@@ -31,7 +31,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create necessary directories
-RUN mkdir -p /app/python /app/static /music /config /run/nginx
+RUN mkdir -p /app/python /app/static /music /data /run/nginx
 
 # Copy Python source code
 COPY frontend/python/*.py /app/python/
@@ -63,8 +63,8 @@ pythonpath = /app\n\
 RUN echo '#!/bin/sh\n\
 \n\
 # Ensure correct permissions\n\
-chown -R myuser:myuser /config /app/static\n\
-chmod -R 755 /config /app/static\n\
+chown -R myuser:myuser /data /app/static\n\
+chmod -R 755 /data /app/static\n\
 \n\
 # Start Nginx\n\
 nginx\n\
@@ -88,7 +88,7 @@ LABEL description="Trackly - Music tracking application"
 
 # Create a non-root user
 RUN useradd -m myuser
-RUN chown -R myuser:myuser /app /music
+RUN chown -R myuser:myuser /app /music /data
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \

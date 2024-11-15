@@ -57,7 +57,7 @@ docker-compose up -d
 
 ### Volumes
 - `/music`: Mount your music directory here
-- `/config`: Persistent storage for application data
+- `/data`: Persistent storage for application data
 
 ## 🛠️ Technical Stack
 
