@@ -10,14 +10,15 @@ export default defineConfig({
     host: '0.0.0.0', // This allows access from other machines
     strictPort: true, // This ensures it only uses the specified port
     fs: {
-      // Allow serving files from one level up, where the config folder is
+      // Allow serving files from one level up to access data and config
       allow: ['..']
     }
   },
-  // Alias /config to point to the config directory in development
+  // Alias both /config and /data to point to their respective directories
   resolve: {
     alias: {
-      '/config': path.resolve(__dirname, '../config')
+      '/config': path.resolve(__dirname, '../config'),
+      '/data': path.resolve(__dirname, '../data')
     }
   }
 })
