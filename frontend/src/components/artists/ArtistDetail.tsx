@@ -47,7 +47,7 @@ export function ArtistDetail({
 
   return (
     <div className="min-h-screen">
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+      <div className="relative mx-auto h-[350px] overflow-hidden rounded-lg" style={{ aspectRatio: '16/9', maxWidth: '622px' }}>
         <img
           src={backdropSrc}
           alt={`${artist.name}'s backdrop`}
@@ -57,9 +57,9 @@ export function ArtistDetail({
         <div 
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to bottom, transparent 50%, ${colorHex}),
-                        linear-gradient(to right, ${colorHex}99 0%, transparent 15%),
-                        linear-gradient(to left, ${colorHex}99 0%, transparent 15%)`
+            background: `linear-gradient(to bottom, transparent 50%, var(--background) 100%),
+                        linear-gradient(to right, var(--background) 0%, transparent 15%),
+                        linear-gradient(to left, var(--background) 0%, transparent 15%)`
           }}
         />
         
@@ -98,7 +98,7 @@ export function ArtistDetail({
           </DropdownMenu.Root>
         </div>
 
-        <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
+        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
           <div 
             className="relative h-32 w-32 overflow-hidden rounded-full border-4"
             style={{ borderColor: colorHex }}
@@ -113,7 +113,7 @@ export function ArtistDetail({
         </div>
       </div>
 
-      <div className="mt-20 text-center">
+      <div className="mt-16 text-center">
         <h1 className="text-3xl font-bold">{artist.name}</h1>
       </div>
 

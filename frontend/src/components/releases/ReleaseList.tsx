@@ -23,34 +23,68 @@ export function ReleaseFilter({ value, onChange, className }: {
   className?: string;
 }) {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkAvailableYears() {
-      const currentYear = new Date().getFullYear();
-      const years: number[] = [];
-      
-      for (let year = 2020; year <= currentYear; year++) {
-        try {
-          const response = await fetch(`/data/notified${year}.json`);
-          if (response.ok) {
-            years.push(year);
-          }
-        } catch (error) {
-          console.error(`Error checking year ${year}:`, error);
+      try {
+        setLoading(true);
+        const currentYear = new Date().getFullYear();
+        const startYear = 2020; // We can adjust this based on the earliest year needed
+        const years: number[] = [];
+        
+        // Check all years from startYear to currentYear
+        const yearChecks = [];
+        for (let year = startYear; year <= currentYear; year++) {
+          yearChecks.push(
+            fetch(`/data/notified_${year}.json`)
+              .then(response => {
+                if (response.ok) {
+                  years.push(year);
+                }
+              })
+              .catch(() => {
+                // Silently ignore missing year files
+              })
+          );
         }
+        
+        // Wait for all year checks to complete
+        await Promise.all(yearChecks);
+        
+        // Sort years in descending order (newest first)
+        setAvailableYears(years.sort((a, b) => b - a));
+      } catch (error) {
+        console.error("Error checking available years:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      setAvailableYears(years.sort((a, b) => b - a));
     }
 
     checkAvailableYears();
   }, []);
 
+  // Default to current year if available, otherwise "all"
+  useEffect(() => {
+    if (availableYears.length > 0 && value === "all") {
+      onChange(availableYears[0]);
+    }
+  }, [availableYears, value, onChange]);
+
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger className={`flex items-center gap-1 rounded-lg bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent ${className}`}>
-        {value === "all" ? "All Time" : `${value}`}
-        <ChevronDown className="h-4 w-4" />
+      <DropdownMenu.Trigger 
+        className={`flex items-center gap-1 rounded-lg bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent ${className}`}
+        disabled={loading}
+      >
+        {loading ? (
+          "Loading years..."
+        ) : (
+          <>
+            {value === "all" ? "All Time" : `${value}`}
+            <ChevronDown className="h-4 w-4" />
+          </>
+        )}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content

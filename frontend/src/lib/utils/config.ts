@@ -45,6 +45,30 @@ async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
   }
 }
 
+async function loadAllAvailableReleases(): Promise<NotifiedAlbum[]> {
+  const currentYear = new Date().getFullYear();
+  const startYear = 2020; // We can adjust this based on the earliest year needed
+  const allReleases: NotifiedAlbum[] = [];
+  
+  // Load releases for all years in parallel
+  const yearPromises = [];
+  for (let year = startYear; year <= currentYear; year++) {
+    yearPromises.push(loadReleasesForYear(year));
+  }
+  
+  try {
+    const releasesPerYear = await Promise.all(yearPromises);
+    // Combine all releases
+    releasesPerYear.forEach(yearReleases => {
+      allReleases.push(...yearReleases);
+    });
+  } catch (error) {
+    console.error('Error loading releases:', error);
+  }
+  
+  return allReleases;
+}
+
 export async function loadArtistsConfig() {
   try {
     // Load artists data
@@ -54,16 +78,8 @@ export async function loadArtistsConfig() {
     }
     const data: ArtistsConfig = await response.json();
     
-    // Load current year releases
-    const currentYear = new Date().getFullYear();
-    const currentReleases = await loadReleasesForYear(currentYear);
-    
-    // Load previous year releases
-    const previousYear = currentYear - 1;
-    const previousReleases = await loadReleasesForYear(previousYear);
-    
-    // Combine all releases
-    const allReleases = [...currentReleases, ...previousReleases];
+    // Load all available releases
+    const allReleases = await loadAllAvailableReleases();
     
     // Transform and combine the data
     return data.artists.map(artist => ({
@@ -82,6 +98,8 @@ export async function loadArtistsConfig() {
           artist: release.artist,
           releaseDate: release.release_date
         }))
+        // Sort releases by date (newest first)
+        .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
     }));
   } catch (error) {
     console.error('Error loading artists config:', error);

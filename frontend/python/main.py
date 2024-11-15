@@ -30,10 +30,31 @@ FILE_CHECK_INTERVAL: int = 480
 MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
 
-def get_notified_file_path() -> str:
-    """Get the current year's notified file path"""
+def get_notified_file_path(year: Optional[int] = None) -> str:
+    """
+    Get the notified file path for a specific year.
+    If year is not provided, uses the current year.
+    """
+    target_year = year if year is not None else datetime.now().year
+    return os.path.join(DATA_DIR, f"notified_{target_year}.json")
+
+def ensure_notified_file(year: Optional[int] = None) -> None:
+    """
+    Ensure the notified file exists for the specified year.
+    If year is not provided, uses the current year.
+    """
+    file_path = get_notified_file_path(year)
+    if not os.path.exists(file_path):
+        logger.info(f"Creating new notified file for year {year or datetime.now().year}")
+        safe_write_json(file_path, {'notified_albums': []})
+
+def check_year_change() -> None:
+    """
+    Check if the year has changed and create new notified file if needed.
+    Keeps previous years' files intact for history.
+    """
     current_year = datetime.now().year
-    return os.path.join(DATA_DIR, f"notified_{current_year}.json")
+    ensure_notified_file(current_year)
 
 # 1. Environment Setup Functions
 def ensure_config_directory() -> None:
@@ -333,18 +354,28 @@ def format_release_date(date_str: str) -> str:
 
 def is_album_notified(artist: str, album: str) -> bool:
     """Check if an album has already been notified"""
-    notified_file = get_notified_file_path()
-    data = safe_read_json(notified_file)
-    if not data:
+    try:
+        release_year = datetime.now().year
+        notified_file = get_notified_file_path(release_year)
+        ensure_notified_file(release_year)
+        
+        data = safe_read_json(notified_file)
+        if not data:
+            return False
+        
+        return any(n['artist'] == artist and n['album'] == album 
+                  for n in data.get('notified_albums', []))
+    except Exception as e:
+        logger.error(f"Error checking notified album: {str(e)}")
         return False
-    
-    return any(n['artist'] == artist and n['album'] == album 
-              for n in data.get('notified_albums', []))
 
 def add_notified_album(artist: str, album: str, release_date: str) -> bool:
     """Add an album to the notified albums list with validation"""
     try:
-        notified_file = get_notified_file_path()
+        release_year = datetime.now().year
+        notified_file = get_notified_file_path(release_year)
+        ensure_notified_file(release_year)
+        
         data = safe_read_json(notified_file) or {'notified_albums': []}
         
         data['notified_albums'].append({
@@ -407,30 +438,6 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
             time.sleep(FILE_CHECK_INTERVAL)
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord notification: {str(e)}")
-
-def check_year_change() -> None:
-    """Check if the year has changed and create new notified-<year>.json if needed"""
-    current_year = datetime.now().year
-    notified_file = get_notified_file_path()
-    
-    if not os.path.exists(notified_file):
-        logger.info(f"Creating new notified_{current_year}.json")
-        safe_write_json(notified_file, {'notified_albums': []})
-        return
-
-    data = safe_read_json(notified_file)
-    if not data:
-        return
-
-    try:
-        for album in data.get('notified_albums', []):
-            notified_at = datetime.fromisoformat(album['notified_at'])
-            if notified_at.year < current_year:
-                logger.info(f"Year has changed, creating new notified_{current_year}.json")
-                safe_write_json(notified_file, {'notified_albums': []})
-                break
-    except Exception as e:
-        logger.error(f"Error checking year change: {str(e)}")
 
 def process_release_group(
     release_group: Dict[str, Any],
@@ -558,6 +565,8 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
         
+        # Ensure current year's notified file exists
+        ensure_notified_file()
         logger.info("Trackly startup complete - configuration validated")
         
         # 6. Start Scheduled Scan
