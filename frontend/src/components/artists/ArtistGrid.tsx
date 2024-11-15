@@ -26,38 +26,20 @@ export function ArtistGrid({
     onItemsPerRowChange?.(newValue);
   };
 
+  // Sort artists alphabetically by name
+  const sortedArtists = [...artists].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 rounded-lg bg-card p-4">
-        <span className="text-sm font-medium">Grid Size:</span>
-        <Slider.Root
-          className="relative flex h-5 w-[200px] touch-none items-center"
-          defaultValue={[itemsPerRow]}
-          min={4}
-          max={16}
-          step={1}
-          onValueChange={handleSliderChange}
-        >
-          <Slider.Track className="relative h-1 w-full grow rounded-full bg-secondary">
-            <Slider.Range className="absolute h-full rounded-full bg-primary" />
-          </Slider.Track>
-          <Slider.Thumb
-            className="block h-4 w-4 rounded-full bg-primary shadow transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            aria-label="Grid size"
-          />
-        </Slider.Root>
-        <span className="min-w-[2rem] text-sm tabular-nums">
-          {itemsPerRow}
-        </span>
-      </div>
-
       <div
         className="grid gap-4"
         style={{
           gridTemplateColumns: calculateGridColumns(itemsPerRow),
         }}
       >
-        {artists.map((artist) => (
+        {sortedArtists.map((artist) => (
           <ArtistCard
             key={artist.name}
             name={artist.name}

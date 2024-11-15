@@ -7,9 +7,10 @@ interface LayoutProps {
   children: ReactNode;
   theme: "light" | "dark";
   onThemeToggle: () => void;
+  headerExtra?: ReactNode;
 }
 
-export function Layout({ children, theme, onThemeToggle }: LayoutProps) {
+export function Layout({ children, theme, onThemeToggle, headerExtra }: LayoutProps) {
   const location = useLocation();
 
   const navigation = [
@@ -75,7 +76,10 @@ export function Layout({ children, theme, onThemeToggle }: LayoutProps) {
         {/* Header */}
         <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
           <div className="flex h-16 items-center justify-between px-6">
-            <h1 className="text-xl font-semibold text-primary">{getCurrentPageTitle()}</h1>
+            <div className="flex items-center gap-6">
+              <h1 className="text-xl font-semibold text-primary">{getCurrentPageTitle()}</h1>
+              {headerExtra}
+            </div>
             <button
               onClick={onThemeToggle}
               className="rounded-lg p-2 hover:bg-accent"

@@ -54,9 +54,10 @@ max_requests = 1000\n\
 max_requests_jitter = 50\n\
 \n\
 # Logging\n\
-accesslog = "-"\n\
-errorlog = "-"\n\
-loglevel = "info"\n\
+accesslog = None  # Disable access log\n\
+errorlog = None  # Disable error log\n\
+loglevel = "error"  # Only show critical errors from gunicorn\n\
+capture_output = True  # Capture application stdout/stderr\n\
 \n\
 # Process naming\n\
 proc_name = "trackly"\n\

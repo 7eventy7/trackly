@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "react-router-dom";
+import * as Slider from "@radix-ui/react-slider";
 import { Layout } from "./components/ui/Layout";
 import { ArtistGrid } from "./components/artists/ArtistGrid";
 import { ArtistDetail } from "./components/artists/ArtistDetail";
-import { ReleaseList } from "./components/releases/ReleaseList";
+import { ReleaseList, ReleaseFilter, FilterPeriod } from "./components/releases/ReleaseList";
 import { Settings } from "./components/settings/Settings";
 import { Artist, Release, Settings as SettingsType, DEFAULT_SETTINGS } from "./lib/utils";
 import { loadArtistsConfig } from "./lib/utils/config";
@@ -41,10 +42,38 @@ function ArtistDetailWrapper({ artists }: { artists: Artist[] }) {
   );
 }
 
+function GridSizeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="text-sm font-medium">Grid Size:</span>
+      <Slider.Root
+        className="relative flex h-5 w-[200px] touch-none items-center"
+        defaultValue={[value]}
+        min={4}
+        max={16}
+        step={1}
+        onValueChange={(values) => onChange(values[0])}
+      >
+        <Slider.Track className="relative h-1 w-full grow rounded-full bg-secondary">
+          <Slider.Range className="absolute h-full rounded-full bg-primary" />
+        </Slider.Track>
+        <Slider.Thumb
+          className="block h-4 w-4 rounded-full bg-primary shadow transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-label="Grid size"
+        />
+      </Slider.Root>
+      <span className="min-w-[2rem] text-sm tabular-nums">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("all");
   const [settings, setSettings] = useState<SettingsType>(() => {
     const saved = localStorage.getItem("trackly-settings");
     return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
@@ -109,6 +138,15 @@ export default function App() {
     (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
   );
 
+  // Create artistColors map
+  const artistColors = useMemo(() => {
+    const colorMap: Record<string, number> = {};
+    artists.forEach(artist => {
+      colorMap[artist.name] = artist.color;
+    });
+    return colorMap;
+  }, [artists]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -125,17 +163,49 @@ export default function App() {
     );
   }
 
+  const getHeaderExtra = (pathname: string) => {
+    if (pathname === "/artists") {
+      return (
+        <GridSizeSlider
+          value={settings.itemsPerRow}
+          onChange={(value) => handleSettingsChange({ itemsPerRow: value })}
+        />
+      );
+    }
+    if (pathname === "/releases") {
+      return (
+        <ReleaseFilter
+          value={filterPeriod}
+          onChange={setFilterPeriod}
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <BrowserRouter>
-      <Layout theme={settings.theme} onThemeToggle={handleThemeToggle}>
-        <Routes>
-          <Route
-            path="/"
-            element={<Navigate to="/artists" replace />}
-          />
-          <Route
-            path="/artists"
-            element={
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Layout
+              theme={settings.theme}
+              onThemeToggle={handleThemeToggle}
+              headerExtra={getHeaderExtra("/")}
+            >
+              <Navigate to="/artists" replace />
+            </Layout>
+          }
+        />
+        <Route
+          path="/artists"
+          element={
+            <Layout
+              theme={settings.theme}
+              onThemeToggle={handleThemeToggle}
+              headerExtra={getHeaderExtra("/artists")}
+            >
               <ArtistGrid
                 artists={artists}
                 defaultItemsPerRow={settings.itemsPerRow}
@@ -143,34 +213,48 @@ export default function App() {
                   handleSettingsChange({ itemsPerRow: value })
                 }
               />
-            }
-          />
-          <Route
-            path="/artists/:name"
-            element={<ArtistDetailWrapper artists={artists} />}
-          />
-          <Route
-            path="/releases"
-            element={
+            </Layout>
+          }
+        />
+        <Route
+          path="/artists/:name"
+          element={
+            <Layout theme={settings.theme} onThemeToggle={handleThemeToggle}>
+              <ArtistDetailWrapper artists={artists} />
+            </Layout>
+          }
+        />
+        <Route
+          path="/releases"
+          element={
+            <Layout
+              theme={settings.theme}
+              onThemeToggle={handleThemeToggle}
+              headerExtra={getHeaderExtra("/releases")}
+            >
               <ReleaseList
                 releases={sortedReleases}
                 hasMore={false}
                 onLoadMore={() => {}}
+                artistColors={artistColors}
+                filterPeriod={filterPeriod}
               />
-            }
-          />
-          <Route
-            path="/settings"
-            element={
+            </Layout>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Layout theme={settings.theme} onThemeToggle={handleThemeToggle}>
               <Settings
                 settings={settings}
                 onSettingsChange={handleSettingsChange}
                 onClearData={handleClearData}
               />
-            }
-          />
-        </Routes>
-      </Layout>
+            </Layout>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -8,11 +8,9 @@ import multiprocessing
 tracker_started = multiprocessing.Value('i', 0)
 
 def create_app():
-    app = Flask(__name__, static_folder="/app/static")
-
-    @app.route("/")
-    def serve_index():
-        return send_from_directory(app.static_folder, "index.html")
+    # Update static folder to point to the React build directory
+    static_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
+    app = Flask(__name__, static_folder=static_folder)
 
     @app.route("/config/<path:filename>")
     def serve_config(filename):
@@ -22,9 +20,20 @@ def create_app():
     def serve_music(path):
         return send_from_directory("/music", path)
 
+    # Serve static files from the React build
+    @app.route("/assets/<path:path>")
+    def serve_assets(path):
+        return send_from_directory(os.path.join(app.static_folder, "assets"), path)
+
+    # Catch-all route to serve index.html for client-side routing
+    @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
-    def serve_static(path):
-        return send_from_directory(app.static_folder, path)
+    def serve_spa(path):
+        # If the path exists as a file, serve it directly
+        if os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        # Otherwise, serve index.html for client-side routing
+        return send_from_directory(app.static_folder, "index.html")
 
     # Start the tracker only if it hasn't been started yet
     with tracker_started.get_lock():

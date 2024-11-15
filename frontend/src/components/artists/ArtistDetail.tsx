@@ -24,10 +24,10 @@ export function ArtistDetail({
   const [backdropError, setBackdropError] = useState(false);
   const [coverError, setCoverError] = useState(false);
 
-  const backdropSrc = backdropError ? FALLBACK_BACKDROP : artist.backdropImage;
+  const backdropSrc = backdropError ? FALLBACK_BACKDROP : `/music/${encodeURIComponent(artist.name)}/backdrop.png`;
   const coverSrc = coverError 
     ? (artist.fallbackImage || '/icons/trackly.png')
-    : artist.coverImage;
+    : `/music/${encodeURIComponent(artist.name)}/cover.png`;
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
   // Filter releases for the selected year
@@ -47,7 +47,7 @@ export function ArtistDetail({
 
   return (
     <div className="min-h-screen">
-      <div className="relative h-[40vh] min-h-[300px]">
+      <div className="relative h-[calc(40vh+50px)] min-h-[350px]">
         <img
           src={backdropSrc}
           alt={`${artist.name}'s backdrop`}

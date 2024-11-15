@@ -3,30 +3,32 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { Release, formatDate } from "../../lib/utils";
 
-type FilterPeriod = "all" | number;
+export type FilterPeriod = "all" | number;
 
 interface ReleaseListProps {
   releases: Release[];
   onLoadMore?: () => void;
   hasMore?: boolean;
   artistColors: Record<string, number>;
+  filterPeriod: FilterPeriod;
 }
 
 function numberToHex(num: number): string {
   return `#${num.toString(16).padStart(6, '0')}`;
 }
 
-export function ReleaseList({ releases, onLoadMore, hasMore = false, artistColors }: ReleaseListProps) {
-  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("all");
+export function ReleaseFilter({ value, onChange, className }: { 
+  value: FilterPeriod; 
+  onChange: (value: FilterPeriod) => void;
+  className?: string;
+}) {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   useEffect(() => {
-    // Function to check which year files exist
     async function checkAvailableYears() {
       const currentYear = new Date().getFullYear();
       const years: number[] = [];
       
-      // Check each year from 2020 to current year
       for (let year = 2020; year <= currentYear; year++) {
         try {
           const response = await fetch(`/config/notified${year}.json`);
@@ -38,12 +40,45 @@ export function ReleaseList({ releases, onLoadMore, hasMore = false, artistColor
         }
       }
       
-      setAvailableYears(years.sort((a, b) => b - a)); // Sort descending
+      setAvailableYears(years.sort((a, b) => b - a));
     }
 
     checkAvailableYears();
   }, []);
 
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className={`flex items-center gap-1 rounded-lg bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent ${className}`}>
+        {value === "all" ? "All Time" : `${value}`}
+        <ChevronDown className="h-4 w-4" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className="min-w-[8rem] rounded-lg bg-popover p-1 shadow-md"
+          sideOffset={5}
+        >
+          <DropdownMenu.Item
+            className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+            onSelect={() => onChange("all")}
+          >
+            All Time
+          </DropdownMenu.Item>
+          {availableYears.map((year) => (
+            <DropdownMenu.Item
+              key={year}
+              className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+              onSelect={() => onChange(year)}
+            >
+              {year}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+export function ReleaseList({ releases, onLoadMore, hasMore = false, artistColors, filterPeriod }: ReleaseListProps) {
   const filterReleases = (releases: Release[], period: FilterPeriod) => {
     if (period === "all") return releases;
 
@@ -58,37 +93,6 @@ export function ReleaseList({ releases, onLoadMore, hasMore = false, artistColor
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger className="flex items-center gap-1 rounded-lg bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent">
-            {filterPeriod === "all" ? "All Time" : `${filterPeriod}`}
-            <ChevronDown className="h-4 w-4" />
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              className="min-w-[8rem] rounded-lg bg-popover p-1 shadow-md"
-              sideOffset={5}
-            >
-              <DropdownMenu.Item
-                className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-                onSelect={() => setFilterPeriod("all")}
-              >
-                All Time
-              </DropdownMenu.Item>
-              {availableYears.map((year) => (
-                <DropdownMenu.Item
-                  key={year}
-                  className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-                  onSelect={() => setFilterPeriod(year)}
-                >
-                  {year}
-                </DropdownMenu.Item>
-              ))}
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-      </div>
-
       <div className="space-y-4">
         {filteredReleases.map((release) => {
           const artistColor = artistColors[release.artist];

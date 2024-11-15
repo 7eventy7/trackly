@@ -21,17 +21,17 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
   // Determine which image source to use
   const imageSrc = localImageError 
     ? (fallbackImage && !fallbackImageError ? fallbackImage : '/icons/trackly.png')
-    : coverImage;
+    : `/music/${encodeURIComponent(name)}/cover.png`;
 
   const colorHex = color ? numberToHex(color) : '#000000';
 
   const gradientStyle: CSSProperties = {
     background: `linear-gradient(to top, ${colorHex}cc, transparent)`,
-    paddingBottom: '1.5rem'
+    paddingBottom: '2rem' // Increased padding to move name down
   };
 
   const borderStyle: CSSProperties = {
-    borderColor: `${colorHex}1a`
+    borderColor: `${colorHex}cc` // Using the same color as gradient
   };
 
   const handleImageError = () => {
@@ -64,12 +64,12 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
         className="absolute inset-x-0 bottom-0 p-4"
         style={gradientStyle}
       >
-        <h3 className="text-center text-lg font-medium text-white drop-shadow-md">
+        <h3 className="text-center text-lg font-medium text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
           {name}
         </h3>
       </div>
       <div 
-        className="absolute inset-0 rounded-lg ring-1 ring-inset"
+        className="absolute inset-0 rounded-lg ring-2 ring-inset"
         style={borderStyle}
       />
     </Link>

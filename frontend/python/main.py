@@ -177,8 +177,12 @@ class RateLimiter:
         """Increment failure counter and adjust delay"""
         self.consecutive_failures += 1
 
+def artists_file_exists() -> bool:
+    """Check if artists.json exists"""
+    return os.path.exists(ARTISTS_FILE_PATH)
+
 def is_valid_artists_file() -> bool:
-    """Check if artists.json exists and contains valid data"""
+    """Check if artists.json contains valid data"""
     data = safe_read_json(ARTISTS_FILE_PATH)
     if not data:
         return False
@@ -477,10 +481,14 @@ def check_new_releases(notify_on_scan: bool = False) -> None:
     """Check for new releases from tracked artists"""
     logger.info("Starting the cron update...")
     
-    if not is_valid_artists_file():
+    if not artists_file_exists():
+        logger.info("artists.json not found, creating it...")
         if not update_artist_list():
-            logger.error("Failed to update artist list")
+            logger.error("Failed to create artists.json")
             return
+    elif not is_valid_artists_file():
+        logger.info("artists.json exists but is invalid, skipping scan...")
+        return
     
     check_year_change()
     
@@ -519,12 +527,15 @@ def main() -> None:
             send_startup_notification(webhook_url, discord_role)
             mark_startup_complete()
         
-        if not is_valid_artists_file():
-            logger.info("Performing initial music directory scan...")
+        # Only create artists.json if it doesn't exist
+        if not artists_file_exists():
+            logger.info("artists.json not found, performing initial scan...")
             if not update_artist_list():
                 raise RuntimeError("Failed to perform initial artist list update")
+        elif not is_valid_artists_file():
+            logger.info("artists.json exists but is invalid, skipping initial scan...")
         else:
-            logger.info("Valid artists.json found, skipping initial scan")
+            logger.info("Valid artists.json found, proceeding with normal operation")
         
         logger.info("Trackly startup complete - configuration validated")
         
