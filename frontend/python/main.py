@@ -26,7 +26,7 @@ ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
 MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
-USER_AGENT: str = "Trackly/1.0.0 (https://github.com/7eventy7/trackly)"
+USER_AGENT: str = "Trackly/1.0.0 ( https://github.com/7eventy7/trackly )"  # Updated User-Agent format
 FILE_CHECK_INTERVAL: int = 480
 MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
@@ -41,7 +41,6 @@ def ensure_config_directory() -> None:
         logger.error(f"Failed to create config directory: {str(e)}")
         raise
 
-# Rest of the file remains unchanged from the previous version
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
     """Safely read and parse a JSON file with proper error handling"""
     try:
@@ -128,29 +127,54 @@ def generate_vibrant_color() -> int:
     return int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
 
 class RateLimiter:
-    def __init__(self, min_delay: float = 1.0, max_delay: float = 3.0):
+    def __init__(self, min_delay: float = 1.0, max_delay: float = 2.0):
         self.min_delay: float = min_delay
         self.max_delay: float = max_delay
         self.last_request_time: float = 0
         self.consecutive_failures: int = 0
+        self.requests_this_second: int = 0
+        self.last_second: int = 0
 
     def wait(self) -> None:
-        now = time.time()
+        """Wait appropriate time between requests to respect rate limits"""
+        current_time = time.time()
+        current_second = int(current_time)
+
+        # Reset counter if we're in a new second
+        if current_second != self.last_second:
+            self.requests_this_second = 0
+            self.last_second = current_second
+
+        # If we've made too many requests this second, wait until next second
+        if self.requests_this_second >= 50:  # MusicBrainz limit
+            sleep_time = 1.0 - (current_time - current_second)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            self.requests_this_second = 0
+            self.last_second = int(time.time())
+
+        # Calculate base delay
         delay = self.min_delay + random.random() * (self.max_delay - self.min_delay)
+        
+        # Add exponential backoff if we've had failures
         if self.consecutive_failures > 0:
             delay *= (2 ** self.consecutive_failures)
-            delay = min(delay, 30)
+            delay = min(delay, 30)  # Cap maximum delay at 30 seconds
         
-        time_since_last = now - self.last_request_time
+        # Ensure minimum time between requests
+        time_since_last = current_time - self.last_request_time
         if time_since_last < delay:
             time.sleep(delay - time_since_last)
         
         self.last_request_time = time.time()
+        self.requests_this_second += 1
 
     def success(self) -> None:
+        """Reset failure counter on successful request"""
         self.consecutive_failures = 0
 
     def failure(self) -> None:
+        """Increment failure counter and adjust delay"""
         self.consecutive_failures += 1
 
 def is_valid_artists_file() -> bool:
@@ -222,12 +246,21 @@ def load_config() -> Tuple[str, str, str, Optional[str], bool]:
 
 def make_musicbrainz_request(url: str, params: Dict[str, Any], rate_limiter: RateLimiter) -> Optional[Dict[str, Any]]:
     """Make a rate-limited request to MusicBrainz API with retries"""
-    headers = {'User-Agent': USER_AGENT}
+    headers = {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json'
+    }
     
     for attempt in range(MAX_RETRIES):
         rate_limiter.wait()
         try:
             response = requests.get(url, params=params, headers=headers)
+            
+            if response.status_code == 503:
+                logger.warning("Rate limited by MusicBrainz API, backing off...")
+                rate_limiter.failure()
+                continue
+                
             response.raise_for_status()
             rate_limiter.success()
             return response.json()
