@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronLeft, ChevronDown } from "lucide-react";
-import { Artist, FALLBACK_BACKDROP, FALLBACK_COVER, formatDate } from "../../lib/utils";
+import { Artist, FALLBACK_BACKDROP, formatDate } from "../../lib/utils";
 
 interface ArtistDetailProps {
   artist: Artist;
@@ -25,7 +25,9 @@ export function ArtistDetail({
   const [coverError, setCoverError] = useState(false);
 
   const backdropSrc = backdropError ? FALLBACK_BACKDROP : artist.backdropImage;
-  const coverSrc = coverError ? FALLBACK_COVER : artist.coverImage;
+  const coverSrc = coverError 
+    ? (artist.fallbackImage || '/icons/trackly.png')
+    : artist.coverImage;
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
   // Filter releases for the selected year

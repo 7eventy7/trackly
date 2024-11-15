@@ -1,6 +1,0 @@
-python-dotenv==1.0.1
-requests==2.32.3
-typing-extensions==4.12.2
-croniter==5.0.1
-flask==3.0.2
-werkzeug==3.0.1
