@@ -20,8 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get the absolute path to the config directory
-# In Docker, this will be /app/static/config
-CONFIG_DIR = str(Path("/app/static/config") if os.path.exists("/app/static") else Path(__file__).resolve().parent.parent / "public" / "config")
+# In Docker, this will be /config as mounted in docker-compose.yml
+CONFIG_DIR = str(Path("/config") if os.path.exists("/config") else Path(__file__).resolve().parent.parent / "public" / "config")
 ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
