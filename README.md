@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="icons/trackly.png" width="32" height="32" alt="Trackly Icon"> Trackly
+# <img src="frontend/public/icons/trackly.png" width="32" height="32" alt="Trackly Icon"> Trackly
 
 ### Music Release Tracker for Discord
 
