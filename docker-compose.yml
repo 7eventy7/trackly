@@ -8,7 +8,7 @@ services:
       - "11888:11888"  # Main application port
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
-      - ./data:/data  # Persistent storage directory
+      - ${DATA_PATH:-./data}:/data  # Persistent storage directory
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro  # Mount nginx configuration
     environment:
       - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
