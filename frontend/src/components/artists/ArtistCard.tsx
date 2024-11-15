@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { FALLBACK_COVER, cn } from "../../lib/utils";
 
@@ -18,11 +18,20 @@ export function ArtistCard({ name, coverImage, className, color }: ArtistCardPro
   const imageSrc = imageError ? FALLBACK_COVER : coverImage;
   const colorHex = color ? numberToHex(color) : '#000000';
 
+  const gradientStyle: CSSProperties = {
+    background: `linear-gradient(to top, ${colorHex}cc, transparent)`,
+    paddingBottom: '1.5rem'
+  };
+
+  const borderStyle: CSSProperties = {
+    borderColor: `${colorHex}1a`
+  };
+
   return (
     <Link
       to={`/artists/${encodeURIComponent(name)}`}
       className={cn(
-        "group relative block overflow-hidden rounded-lg bg-card transition-all hover:scale-102 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "group relative block overflow-hidden rounded-lg bg-card transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
         className
       )}
     >
@@ -36,10 +45,7 @@ export function ArtistCard({ name, coverImage, className, color }: ArtistCardPro
       </div>
       <div 
         className="absolute inset-x-0 bottom-0 p-4"
-        style={{
-          background: `linear-gradient(to top, ${colorHex}cc, transparent)`,
-          paddingBottom: '1.5rem'
-        }}
+        style={gradientStyle}
       >
         <h3 className="text-center text-lg font-medium text-white drop-shadow-md">
           {name}
@@ -47,9 +53,7 @@ export function ArtistCard({ name, coverImage, className, color }: ArtistCardPro
       </div>
       <div 
         className="absolute inset-0 rounded-lg ring-1 ring-inset"
-        style={{ 
-          ringColor: `${colorHex}1a`
-        }}
+        style={borderStyle}
       />
     </Link>
   );
