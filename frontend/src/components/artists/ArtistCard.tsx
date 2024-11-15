@@ -31,7 +31,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
   };
 
   const borderStyle: CSSProperties = {
-    borderColor: `${colorHex}cc` // Using the same color as gradient
+    borderColor: colorHex // Using the full color instead of semi-transparent
   };
 
   const handleImageError = () => {

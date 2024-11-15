@@ -4,32 +4,32 @@
  
 @layer base {
   :root {
-    --background: 60 30% 98%; /* Changed to cream-like white */
+    --background: 67 19% 75%; /* Updated to #c8ccb1 */
     --foreground: 222.2 84% 4.9%;
 
-    --card: 60 30% 98%; /* Changed to cream-like white */
+    --card: 67 19% 75%; /* Updated to match background */
     --card-foreground: 222.2 84% 4.9%;
  
-    --popover: 60 30% 98%; /* Changed to cream-like white */
+    --popover: 67 19% 75%; /* Updated to match background */
     --popover-foreground: 222.2 84% 4.9%;
  
     --primary: 157 100% 50%;
     --primary-foreground: 210 40% 98%;
  
-    --secondary: 60 30% 96%; /* Adjusted to match new background */
+    --secondary: 67 19% 70%; /* Slightly darker than background */
     --secondary-foreground: 222.2 47.4% 11.2%;
  
-    --muted: 60 30% 96%; /* Adjusted to match new background */
+    --muted: 67 19% 70%; /* Slightly darker than background */
     --muted-foreground: 215.4 16.3% 46.9%;
  
-    --accent: 60 30% 96%; /* Adjusted to match new background */
+    --accent: 67 19% 70%; /* Slightly darker than background */
     --accent-foreground: 222.2 47.4% 11.2%;
  
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 60 30% 90%; /* Adjusted border color */
-    --input: 60 30% 90%; /* Adjusted input color */
+    --border: 67 19% 65%; /* Darker than background for contrast */
+    --input: 67 19% 65%; /* Darker than background for contrast */
     --ring: 157 100% 50%;
  
     --radius: 0.5rem;
