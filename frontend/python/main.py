@@ -20,9 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get the absolute path to the config directory
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
-CONFIG_DIR = str(PROJECT_ROOT / "public" / "config")
+# In Docker, this will be /app/static/config
+CONFIG_DIR = str(Path("/app/static/config") if os.path.exists("/app/static") else Path(__file__).resolve().parent.parent / "public" / "config")
 ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")
@@ -42,7 +41,7 @@ def ensure_config_directory() -> None:
         logger.error(f"Failed to create config directory: {str(e)}")
         raise
 
-# Rest of the file remains unchanged
+# Rest of the file remains unchanged from the previous version
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
     """Safely read and parse a JSON file with proper error handling"""
     try:
