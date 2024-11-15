@@ -5,7 +5,7 @@ services:
   trackly:
     image: 7eventy7/trackly
     ports:
-      - "3000:3000"  # Adding port configuration
+      - "11888:11888"  # Updated port configuration
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
       - ./config:/config  # Persistent storage for config
@@ -14,8 +14,7 @@ services:
       - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
       - DISCORD_WEBHOOK=  # Set this to your discord webhook url for embeds
       - DISCORD_ROLE=  # Set this to your discord role id number to ping
-      - NOTIFY_ON_SCAN=false  # Set to true to receive notifications for each scan completion
+      - NOTIFY_ON_SCAN=false  # Set to receive notifications for each scan completion
       - DISCORD_NOTIFY=true  # Set to false to disable discord notifications during scan
-      - PORT=3000  # Port configuration for the application
     restart: unless-stopped
     container_name: trackly
