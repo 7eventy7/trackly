@@ -19,19 +19,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Get the absolute paths to the data and music directories
-# In Docker, these will be mounted as in docker-compose.yml
+# Constants
 DATA_DIR = "/data"
 MUSIC_DIR = "/music"
 ARTISTS_FILE_PATH: str = os.path.join(DATA_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(DATA_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(DATA_DIR, "startup.json")
 MUSICBRAINZ_BASE_URL: str = "https://musicbrainz.org/ws/2"
-USER_AGENT: str = "Trackly/1.0.0 ( https://github.com/7eventy7/trackly )"  # Updated User-Agent format
+USER_AGENT: str = "Trackly/1.0.0 ( https://github.com/7eventy7/trackly )"
 FILE_CHECK_INTERVAL: int = 480
 MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
 
+# 1. Environment Setup Functions
 def ensure_config_directory() -> None:
     """Ensure data directory exists and has proper permissions"""
     try:
@@ -42,44 +42,43 @@ def ensure_config_directory() -> None:
         logger.error(f"Failed to create data directory: {str(e)}")
         raise
 
-def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
-    """Safely read and parse a JSON file with proper error handling"""
+def load_config() -> Tuple[str, str, str, Optional[str], bool]:
+    """Load and validate environment variables"""
+    load_dotenv()
+    
+    required_vars = {
+        'UPDATE_INTERVAL': os.getenv('UPDATE_INTERVAL'),
+        'DISCORD_WEBHOOK': os.getenv('DISCORD_WEBHOOK')
+    }
+
+    logger.info("Loading configuration...")
+    missing_vars = [var for var, val in required_vars.items() if not val]
+    
+    if missing_vars:
+        error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
     try:
-        if not os.path.exists(file_path):
-            logger.info(f"File not found: {file_path}")
-            return None
+        if not croniter.is_valid(required_vars['UPDATE_INTERVAL']):
+            raise ValueError("Invalid cron expression")
+        logger.info(f"Configuration loaded successfully. Update interval (cron): {required_vars['UPDATE_INTERVAL']}")
+    except (CroniterNotAlphaError, CroniterBadCronError) as e:
+        error_msg = f"Invalid cron expression in UPDATE_INTERVAL: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
-        with open(file_path, 'r') as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in {file_path}: {str(e)}")
-        return None
-    except Exception as e:
-        logger.error(f"Error reading {file_path}: {str(e)}")
-        return None
+    notify_on_scan = os.getenv('NOTIFY_ON_SCAN', 'false').lower() == 'true'
 
-def safe_write_json(file_path: str, data: Dict[str, Any]) -> bool:
-    """Safely write data to a JSON file with validation"""
-    try:
-        temp_path = f"{file_path}.tmp"
-        with open(temp_path, 'w') as f:
-            json.dump(data, f, indent=2)
+    return (
+        MUSIC_DIR,
+        required_vars['UPDATE_INTERVAL'],
+        required_vars['DISCORD_WEBHOOK'],
+        os.getenv('DISCORD_ROLE'),
+        notify_on_scan
+    )
 
-        with open(temp_path, 'r') as f:
-            json.load(f)
-
-        os.replace(temp_path, file_path)
-        logger.info(f"Successfully wrote to {file_path}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to write to {file_path}: {str(e)}")
-        if os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except:
-                pass
-        return False
-
+# 2. Startup Check & Notification Functions
 def is_first_startup() -> bool:
     """Check if this is the first time the container is starting"""
     startup_data = safe_read_json(STARTUP_FILE_PATH)
@@ -119,14 +118,50 @@ def send_startup_notification(webhook_url: str, discord_role: Optional[str]) -> 
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send startup notification: {str(e)}")
 
-def generate_vibrant_color() -> int:
-    """Generate a vibrant color using HSV color space"""
-    hue = random.random()
-    saturation = random.uniform(0.7, 1.0)
-    value = random.uniform(0.8, 1.0)
-    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
-    return int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
+# 3. Artists File Check Functions
+def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
+    """Safely read and parse a JSON file with proper error handling"""
+    try:
+        if not os.path.exists(file_path):
+            logger.info(f"File not found: {file_path}")
+            return None
 
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in {file_path}: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Error reading {file_path}: {str(e)}")
+        return None
+
+def safe_write_json(file_path: str, data: Dict[str, Any]) -> bool:
+    """Safely write data to a JSON file with validation"""
+    try:
+        temp_path = f"{file_path}.tmp"
+        with open(temp_path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+        with open(temp_path, 'r') as f:
+            json.load(f)
+
+        os.replace(temp_path, file_path)
+        logger.info(f"Successfully wrote to {file_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to write to {file_path}: {str(e)}")
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+        return False
+
+def artists_file_exists() -> bool:
+    """Check if artists.json exists"""
+    return os.path.exists(ARTISTS_FILE_PATH)
+
+# 4. MusicBrainz API Query Functions
 class RateLimiter:
     def __init__(self, min_delay: float = 1.0, max_delay: float = 2.0):
         self.min_delay: float = min_delay
@@ -137,32 +172,26 @@ class RateLimiter:
         self.last_second: int = 0
 
     def wait(self) -> None:
-        """Wait appropriate time between requests to respect rate limits"""
         current_time = time.time()
         current_second = int(current_time)
 
-        # Reset counter if we're in a new second
         if current_second != self.last_second:
             self.requests_this_second = 0
             self.last_second = current_second
 
-        # If we've made too many requests this second, wait until next second
-        if self.requests_this_second >= 50:  # MusicBrainz limit
+        if self.requests_this_second >= 50:
             sleep_time = 1.0 - (current_time - current_second)
             if sleep_time > 0:
                 time.sleep(sleep_time)
             self.requests_this_second = 0
             self.last_second = int(time.time())
 
-        # Calculate base delay
         delay = self.min_delay + random.random() * (self.max_delay - self.min_delay)
         
-        # Add exponential backoff if we've had failures
         if self.consecutive_failures > 0:
             delay *= (2 ** self.consecutive_failures)
-            delay = min(delay, 30)  # Cap maximum delay at 30 seconds
+            delay = min(delay, 30)
         
-        # Ensure minimum time between requests
         time_since_last = current_time - self.last_request_time
         if time_since_last < delay:
             time.sleep(delay - time_since_last)
@@ -171,83 +200,10 @@ class RateLimiter:
         self.requests_this_second += 1
 
     def success(self) -> None:
-        """Reset failure counter on successful request"""
         self.consecutive_failures = 0
 
     def failure(self) -> None:
-        """Increment failure counter and adjust delay"""
         self.consecutive_failures += 1
-
-def artists_file_exists() -> bool:
-    """Check if artists.json exists"""
-    return os.path.exists(ARTISTS_FILE_PATH)
-
-def is_valid_artists_file() -> bool:
-    """Check if artists.json contains valid data"""
-    data = safe_read_json(ARTISTS_FILE_PATH)
-    if not data:
-        return False
-
-    try:
-        required_keys = {'artists', 'last_updated'}
-        if not all(key in data for key in required_keys):
-            logger.warning("artists.json missing required keys")
-            return False
-            
-        if not isinstance(data['artists'], list):
-            logger.warning("artists.json 'artists' field is not a list")
-            return False
-            
-        try:
-            last_updated = datetime.fromisoformat(data['last_updated'])
-            if (datetime.now() - last_updated).days > STALE_FILE_DAYS:
-                logger.info(f"artists.json is stale (>{STALE_FILE_DAYS} days old)")
-                return False
-        except ValueError:
-            logger.warning("Invalid last_updated date format in artists.json")
-            return False
-            
-        logger.info(f"artists.json validated successfully. Contains {len(data['artists'])} artists")
-        return True
-    except Exception as e:
-        logger.error(f"Error validating artists.json: {str(e)}")
-        return False
-
-def load_config() -> Tuple[str, str, str, Optional[str], bool]:
-    """Load environment variables with validation"""
-    load_dotenv()
-    
-    required_vars = {
-        'UPDATE_INTERVAL': os.getenv('UPDATE_INTERVAL'),
-        'DISCORD_WEBHOOK': os.getenv('DISCORD_WEBHOOK')
-    }
-
-    logger.info("Loading configuration...")
-    missing_vars = [var for var, val in required_vars.items() if not val]
-    
-    if missing_vars:
-        error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    try:
-        if not croniter.is_valid(required_vars['UPDATE_INTERVAL']):
-            raise ValueError("Invalid cron expression")
-        logger.info(f"Configuration loaded successfully. Update interval (cron): {required_vars['UPDATE_INTERVAL']}")
-    except (CroniterNotAlphaError, CroniterBadCronError) as e:
-        error_msg = f"Invalid cron expression in UPDATE_INTERVAL: {str(e)}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    notify_on_scan = os.getenv('NOTIFY_ON_SCAN', 'false').lower() == 'true'
-
-    return (
-        MUSIC_DIR,
-        required_vars['UPDATE_INTERVAL'],
-        required_vars['DISCORD_WEBHOOK'],
-        os.getenv('DISCORD_ROLE'),
-        notify_on_scan
-    )
 
 def make_musicbrainz_request(url: str, params: Dict[str, Any], rate_limiter: RateLimiter) -> Optional[Dict[str, Any]]:
     """Make a rate-limited request to MusicBrainz API with retries"""
@@ -294,6 +250,14 @@ def get_artist_id(artist_name: str, rate_limiter: RateLimiter) -> Optional[str]:
         logger.error(f"Error getting MusicBrainz ID for {artist_name}: {str(e)}")
         return None
 
+def generate_vibrant_color() -> int:
+    """Generate a vibrant color using HSV color space"""
+    hue = random.random()
+    saturation = random.uniform(0.7, 1.0)
+    value = random.uniform(0.8, 1.0)
+    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+    return int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
+
 def update_artist_list() -> bool:
     """Update the JSON list of artists from the music directory"""
     logger.info("Updating artist list...")
@@ -322,6 +286,39 @@ def update_artist_list() -> bool:
         logger.error(f"Error updating artist list: {str(e)}")
         return False
 
+# 5. Validation Functions
+def is_valid_artists_file() -> bool:
+    """Check if artists.json contains valid data"""
+    data = safe_read_json(ARTISTS_FILE_PATH)
+    if not data:
+        return False
+
+    try:
+        required_keys = {'artists', 'last_updated'}
+        if not all(key in data for key in required_keys):
+            logger.warning("artists.json missing required keys")
+            return False
+            
+        if not isinstance(data['artists'], list):
+            logger.warning("artists.json 'artists' field is not a list")
+            return False
+            
+        try:
+            last_updated = datetime.fromisoformat(data['last_updated'])
+            if (datetime.now() - last_updated).days > STALE_FILE_DAYS:
+                logger.info(f"artists.json is stale (>{STALE_FILE_DAYS} days old)")
+                return False
+        except ValueError:
+            logger.warning("Invalid last_updated date format in artists.json")
+            return False
+            
+        logger.info(f"artists.json validated successfully. Contains {len(data['artists'])} artists")
+        return True
+    except Exception as e:
+        logger.error(f"Error validating artists.json: {str(e)}")
+        return False
+
+# 6. Scheduled Scan Functions
 def format_release_date(date_str: str) -> str:
     """Format release date to a more readable format"""
     try:
@@ -406,7 +403,7 @@ def send_discord_notification(release_info: Dict[str, str], artist_color: Option
         logger.error(f"Failed to send Discord notification: {str(e)}")
 
 def check_year_change() -> None:
-    """Check if the year has changed and clear notified.json if needed"""
+    """Check if the year has changed and create new notified-<year>.json if needed"""
     data = safe_read_json(NOTIFIED_FILE_PATH)
     if not data:
         return
@@ -416,8 +413,11 @@ def check_year_change() -> None:
         for album in data.get('notified_albums', []):
             notified_at = datetime.fromisoformat(album['notified_at'])
             if notified_at.year < current_year:
-                logger.info("Year has changed, clearing notified.json")
-                safe_write_json(NOTIFIED_FILE_PATH, {'notified_albums': []})
+                logger.info(f"Year has changed, creating new notified-{current_year}.json")
+                new_file_path = os.path.join(DATA_DIR, f"notified-{current_year}.json")
+                safe_write_json(new_file_path, {'notified_albums': []})
+                global NOTIFIED_FILE_PATH
+                NOTIFIED_FILE_PATH = new_file_path
                 break
     except Exception as e:
         logger.error(f"Error checking year change: {str(e)}")
@@ -479,19 +479,23 @@ def check_artist_releases(artist: Dict[str, Any], rate_limiter: RateLimiter, cur
 
 def check_new_releases(notify_on_scan: bool = False) -> None:
     """Check for new releases from tracked artists"""
-    logger.info("Starting the cron update...")
+    logger.info("Starting the scheduled scan...")
     
+    # Pre-scan Checks
     if not artists_file_exists():
         logger.info("artists.json not found, creating it...")
         if not update_artist_list():
             logger.error("Failed to create artists.json")
             return
     elif not is_valid_artists_file():
-        logger.info("artists.json exists but is invalid, skipping scan...")
-        return
+        logger.info("artists.json exists but is invalid, updating it...")
+        if not update_artist_list():
+            logger.error("Failed to update artists.json")
+            return
     
     check_year_change()
     
+    # Release Check Process
     logger.info("Checking for new releases...")
     rate_limiter = RateLimiter()
     data = safe_read_json(ARTISTS_FILE_PATH)
@@ -510,35 +514,43 @@ def check_new_releases(notify_on_scan: bool = False) -> None:
         if new_releases_found:
             break
     
+    # Scan Completion
     if notify_on_scan and not new_releases_found:
         send_discord_notification({}, None, True)
     
-    logger.info("Completed the cron update")
+    logger.info("Completed the scheduled scan")
 
 def main() -> None:
     """Main function to run the artist tracker"""
     logger.info("Starting Trackly...")
     
     try:
+        # 1. Environment Setup
         ensure_config_directory()
         music_path, cron_schedule, webhook_url, discord_role, notify_on_scan = load_config()
         
+        # 2. Startup Check & Notification
         if is_first_startup():
             send_startup_notification(webhook_url, discord_role)
             mark_startup_complete()
         
-        # Only create artists.json if it doesn't exist
+        # 3. Artists File Check & 4. MusicBrainz API Queries
         if not artists_file_exists():
             logger.info("artists.json not found, performing initial scan...")
             if not update_artist_list():
                 raise RuntimeError("Failed to perform initial artist list update")
+        
+        # 5. Validation
         elif not is_valid_artists_file():
-            logger.info("artists.json exists but is invalid, skipping initial scan...")
+            logger.info("artists.json exists but is invalid, updating it...")
+            if not update_artist_list():
+                raise RuntimeError("Failed to update artists.json")
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
         
         logger.info("Trackly startup complete - configuration validated")
         
+        # 6. Start Scheduled Scan
         cron = croniter(cron_schedule, datetime.now())
         
         while True:
