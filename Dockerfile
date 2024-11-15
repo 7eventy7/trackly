@@ -35,9 +35,6 @@ COPY frontend/python/*.py /app/python/
 # Copy built frontend from frontend-builder stage
 COPY --from=frontend-builder /app/frontend/dist/ /app/static/
 
-# Copy config files
-COPY frontend/public/config/ /app/static/config/
-
 # Set essential system environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
