@@ -33,7 +33,7 @@ async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
       ? 'notified.json' 
       : `notified${year}.json`;
     
-    const response = await fetch(`/data/${fileName}`);
+    const response = await fetch(`/~data/${fileName}`);
     if (!response.ok) {
       if (response.status === 404) {
         return []; // No releases for this year
@@ -51,7 +51,7 @@ async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
 export async function loadArtistsConfig() {
   try {
     // Load artists data
-    const response = await fetch('/data/artists.json');
+    const response = await fetch('/~data/artists.json');
     if (!response.ok) {
       throw new Error('Failed to load artists config');
     }
@@ -94,7 +94,7 @@ export async function loadArtistsConfig() {
 
 export async function loadNotifiedConfig() {
   try {
-    const response = await fetch('/data/notified.json');
+    const response = await fetch('/~data/notified.json');
     if (!response.ok) {
       throw new Error('Failed to load notified config');
     }
@@ -107,7 +107,7 @@ export async function loadNotifiedConfig() {
 
 export async function loadStartupConfig() {
   try {
-    const response = await fetch('/data/startup.json');
+    const response = await fetch('/~data/startup.json');
     if (!response.ok) {
       throw new Error('Failed to load startup config');
     }
