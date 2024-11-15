@@ -29,21 +29,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Python source code from the correct location
-COPY frontend/python/ ./python/
-
-# Copy built frontend from previous stage to the correct location
-COPY --from=frontend-builder /app/frontend/dist/ ./static/
-
-# Copy config files to the correct location
-COPY frontend/public/config/ ./static/config/
-
 # Create necessary directories
-RUN mkdir -p /music /config
+RUN mkdir -p /app/python /app/static /music /config
+
+# Copy Python source code
+COPY frontend/python/*.py /app/python/
+
+# Copy built frontend from previous stage
+COPY --from=frontend-builder /app/frontend/dist/ /app/static/
+
+# Copy config files
+COPY frontend/public/config/ /app/static/config/
 
 # Set essential system environment variables
 ENV PYTHONUNBUFFERED=1
-ENV PYTHON_PATH=/app
+ENV PYTHONPATH=/app
 ENV PORT=11888
 
 # Create gunicorn config file
@@ -66,7 +66,7 @@ loglevel = "info"\n\
 \n\
 # Process naming\n\
 proc_name = "trackly"\n\
-' > ./gunicorn.conf.py
+' > /app/gunicorn.conf.py
 
 # Expose the port
 EXPOSE 11888
@@ -86,4 +86,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:11888/ || exit 1
 
 # Set the default command to run gunicorn
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "python.wsgi:app"]
+CMD ["gunicorn", "--config", "/app/gunicorn.conf.py", "python.wsgi:app"]

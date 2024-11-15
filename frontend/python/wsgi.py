@@ -1,10 +1,10 @@
 from flask import Flask, send_from_directory
 import os
-from main import main as tracker_main
+from python.main import main as tracker_main
 import threading
 
 def create_app():
-    app = Flask(__name__, static_folder="../static")
+    app = Flask(__name__, static_folder="/app/static")
 
     @app.route("/")
     def serve_index():

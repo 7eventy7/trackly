@@ -8,7 +8,7 @@ services:
       - "11888:11888"  # Updated port configuration
     volumes:
       - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
-      - ./config:/app/static/config  # Mount config directory to where Flask and main.py expect it
+      - ./config:/config:ro  # Mount config directory as read-only
     environment:
       - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
       - DISCORD_WEBHOOK=  # Set this to your discord webhook url for embeds
