@@ -20,6 +20,13 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
+// Function to get online fallback image URL
+function getOnlineFallbackImage(artistName: string): string {
+  // Remove special characters and spaces for the search query
+  const searchQuery = encodeURIComponent(artistName.replace(/[^\w\s]/gi, ''));
+  return `https://source.unsplash.com/400x400/?musician,${searchQuery}`;
+}
+
 async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
   try {
     const fileName = year === new Date().getFullYear() 
@@ -64,8 +71,11 @@ export async function loadArtistsConfig() {
     // Transform and combine the data
     return data.artists.map(artist => ({
       name: artist.name,
-      coverImage: `/artists/${artist.name}/cover.jpg`, // Placeholder path
-      backdropImage: `/artists/${artist.name}/backdrop.jpg`, // Placeholder path
+      // Use the mounted /music path with .png extension
+      coverImage: `/music/${artist.name}/backdrop.png`,
+      backdropImage: `/music/${artist.name}/backdrop.png`,
+      // Set online fallback image
+      fallbackImage: getOnlineFallbackImage(artist.name),
       color: artist.color,
       releases: allReleases
         .filter(release => release.artist === artist.name)

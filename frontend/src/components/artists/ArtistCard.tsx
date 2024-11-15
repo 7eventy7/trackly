@@ -1,10 +1,11 @@
 import { useState, CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { FALLBACK_COVER, cn } from "../../lib/utils";
+import { cn } from "../../lib/utils";
 
 interface ArtistCardProps {
   name: string;
   coverImage: string;
+  fallbackImage?: string;
   className?: string;
   color?: number;
 }
@@ -13,9 +14,15 @@ function numberToHex(num: number): string {
   return `#${num.toString(16).padStart(6, '0')}`;
 }
 
-export function ArtistCard({ name, coverImage, className, color }: ArtistCardProps) {
-  const [imageError, setImageError] = useState(false);
-  const imageSrc = imageError ? FALLBACK_COVER : coverImage;
+export function ArtistCard({ name, coverImage, fallbackImage, className, color }: ArtistCardProps) {
+  const [localImageError, setLocalImageError] = useState(false);
+  const [fallbackImageError, setFallbackImageError] = useState(false);
+
+  // Determine which image source to use
+  const imageSrc = localImageError 
+    ? (fallbackImage && !fallbackImageError ? fallbackImage : '/icons/trackly.png')
+    : coverImage;
+
   const colorHex = color ? numberToHex(color) : '#000000';
 
   const gradientStyle: CSSProperties = {
@@ -25,6 +32,16 @@ export function ArtistCard({ name, coverImage, className, color }: ArtistCardPro
 
   const borderStyle: CSSProperties = {
     borderColor: `${colorHex}1a`
+  };
+
+  const handleImageError = () => {
+    if (!localImageError) {
+      // First error - try fallback image
+      setLocalImageError(true);
+    } else if (!fallbackImageError && fallbackImage) {
+      // Second error - mark fallback as failed too
+      setFallbackImageError(true);
+    }
   };
 
   return (
@@ -39,7 +56,7 @@ export function ArtistCard({ name, coverImage, className, color }: ArtistCardPro
         <img
           src={imageSrc}
           alt={`${name}'s cover`}
-          onError={() => setImageError(true)}
+          onError={handleImageError}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
