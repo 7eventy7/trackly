@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration Constants
-CONFIG_DIR: str = "/config"
+CONFIG_DIR: str = "../public/config"  # Updated path to frontend/public/config
 ARTISTS_FILE_PATH: str = os.path.join(CONFIG_DIR, "artists.json")
 NOTIFIED_FILE_PATH: str = os.path.join(CONFIG_DIR, "notified.json")
 STARTUP_FILE_PATH: str = os.path.join(CONFIG_DIR, "startup.json")

@@ -33,6 +33,7 @@ export interface Artist {
   coverImage: string;
   backdropImage: string;
   releases: Release[];
+  color: number; // Added color property from config
 }
 
 export interface Release {

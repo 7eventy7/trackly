@@ -1,0 +1,175 @@
+{
+  "artists": [
+    {
+      "name": "9lokknine",
+      "id": "e44aa1c2-c4ea-4dae-a9c5-36fd9fd22d09",
+      "color": 13830836
+    },
+    {
+      "name": "Baby Keem",
+      "id": "81d12ca7-5b89-4d21-8736-860b7400b4eb",
+      "color": 14920707
+    },
+    {
+      "name": "Caravan Palace",
+      "id": "72eabb1a-4d2c-4de6-90f2-671b2cada42b",
+      "color": 11267335
+    },
+    {
+      "name": "Cypress Hill",
+      "id": "51508c1f-8d07-4a00-9cf1-26c570fe7b78",
+      "color": 2577637
+    },
+    {
+      "name": "Denzel Curry",
+      "id": "5f95440d-7737-4a36-9bcf-c05337f7129b",
+      "color": 5109832
+    },
+    {
+      "name": "Gorillaz",
+      "id": "e21857d5-3256-4547-afb3-4b6ded592596",
+      "color": 14617613
+    },
+    {
+      "name": "Juice WRLD",
+      "id": "4e4ebde4-0c56-4dec-844b-6c73adcdd92d",
+      "color": 1303654
+    },
+    {
+      "name": "Key Glock",
+      "id": "c5460e21-d5e7-4e26-ab4c-ba9c627809f8",
+      "color": 324158
+    },
+    {
+      "name": "Kodak Black",
+      "id": "5ec1ecc6-4535-4911-a27a-e26343f4a189",
+      "color": 11527997
+    },
+    {
+      "name": "Lil Darkie",
+      "id": "99e0983f-6183-463e-a61e-2041ca8931ba",
+      "color": 13752327
+    },
+    {
+      "name": "Lil Keed",
+      "id": "874367ae-8bb4-43eb-87f4-809f792ba66f",
+      "color": 4046037
+    },
+    {
+      "name": "MF DOOM",
+      "id": "188711ed-c99b-439c-844a-ca831f63a727",
+      "color": 3101644
+    },
+    {
+      "name": "Playboi Carti",
+      "id": "2baf3276-ed6a-4349-8d2e-f4601e7b2167",
+      "color": 8446785
+    },
+    {
+      "name": "Ski Mask The Slump God",
+      "id": "faf916e0-ffc5-4345-a10b-b79ed8c9b8f6",
+      "color": 4782380
+    },
+    {
+      "name": "Smino",
+      "id": "96800e05-9924-4321-859a-76e0d4750f2f",
+      "color": 14428221
+    },
+    {
+      "name": "Tay-K",
+      "id": "3bafaf0d-e3bc-40b1-8100-5e38ba8cbba7",
+      "color": 16092937
+    },
+    {
+      "name": "XXXTENTACION",
+      "id": "61af87f4-16ee-4431-8504-cc06187079fb",
+      "color": 323786
+    },
+    {
+      "name": "Young Dolph",
+      "id": "3f334aae-57d4-4787-a048-beec335d47e0",
+      "color": 14627645
+    },
+    {
+      "name": "Young Nudy",
+      "id": "79c9b9a6-4b78-4738-8b81-95b066321ea9",
+      "color": 12047400
+    },
+    {
+      "name": "Young Thug",
+      "id": "800760de-bdf8-43a2-8fe0-44a2401a5515",
+      "color": 451883
+    },
+    {
+      "name": "Maxo Kream",
+      "id": "ffa12b9b-3842-443c-8da2-3e06dace2970",
+      "color": 2544151
+    },
+    {
+      "name": "Smokepurpp",
+      "id": "5a42040d-2ae5-4e2a-a362-22e7b19d993c",
+      "color": 2289725
+    },
+    {
+      "name": "Trippie Redd",
+      "id": "8032cf05-d916-4b2a-9c53-6e75d4a24bd8",
+      "color": 14671657
+    },
+    {
+      "name": "Lil Pump",
+      "id": "65a01fd2-35fb-4817-90d5-ab5506b21161",
+      "color": 5297451
+    },
+    {
+      "name": "JID",
+      "id": "d616b606-cf6a-4b6e-ab0f-e253b8db6610",
+      "color": 5109562
+    },
+    {
+      "name": "Cochise",
+      "id": "385e7301-9fd0-4be4-b79e-df9808b57ba6",
+      "color": 7547874
+    },
+    {
+      "name": "Tyler the Creator",
+      "id": "f6beac20-5dfe-4d1f-ae02-0b0a740aafd6",
+      "color": 10026567
+    },
+    {
+      "name": "bbno$",
+      "id": "27638856-79a1-4495-b7da-1912899560c7",
+      "color": 4782565
+    },
+    {
+      "name": "Danny Towers",
+      "id": "d768a82a-07c2-4854-ae03-d3fa4f33a30b",
+      "color": 11924483
+    },
+    {
+      "name": "DC the Don",
+      "id": "eec466a4-aec6-42ea-ab35-20416e502b9d",
+      "color": 3462744
+    },
+    {
+      "name": "LUCKI",
+      "id": "9ccaca30-60aa-4890-ae6c-ab55225ee274",
+      "color": 7857681
+    },
+    {
+      "name": "MadeinTYO",
+      "id": "01667dde-e5fd-4748-9986-ac623e4e9d65",
+      "color": 15342216
+    },
+    {
+      "name": "Ugly God",
+      "id": "4bafe97c-81d4-4a8e-b54b-7f6e60ea7abe",
+      "color": 15699245
+    },
+    {
+      "name": "Yung Gravy",
+      "id": "20b034b2-35a1-40be-908f-22d1b5681572",
+      "color": 8201180
+    }
+  ],
+  "last_updated": "2024-11-13T03:38:55.694213"
+}

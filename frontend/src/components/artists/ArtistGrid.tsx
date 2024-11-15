@@ -62,6 +62,7 @@ export function ArtistGrid({
             key={artist.name}
             name={artist.name}
             coverImage={artist.coverImage}
+            color={artist.color}
           />
         ))}
       </div>

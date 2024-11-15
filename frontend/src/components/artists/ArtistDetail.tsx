@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronLeft, ChevronDown } from "lucide-react";
@@ -9,6 +9,10 @@ interface ArtistDetailProps {
   availableYears: number[];
   selectedYear: number;
   onYearChange: (year: number) => void;
+}
+
+function numberToHex(num: number): string {
+  return `#${num.toString(16).padStart(6, '0')}`;
 }
 
 export function ArtistDetail({
@@ -22,10 +26,22 @@ export function ArtistDetail({
 
   const backdropSrc = backdropError ? FALLBACK_BACKDROP : artist.backdropImage;
   const coverSrc = coverError ? FALLBACK_COVER : artist.coverImage;
+  const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
-  const sortedReleases = [...artist.releases].sort(
-    (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
-  );
+  // Filter releases for the selected year
+  const filteredReleases = useMemo(() => {
+    return artist.releases.filter(release => {
+      const releaseYear = new Date(release.releaseDate).getFullYear();
+      return releaseYear === selectedYear;
+    });
+  }, [artist.releases, selectedYear]);
+
+  // Sort releases by date (newest first)
+  const sortedReleases = useMemo(() => {
+    return [...filteredReleases].sort(
+      (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+    );
+  }, [filteredReleases]);
 
   return (
     <div className="min-h-screen">
@@ -36,7 +52,12 @@ export function ArtistDetail({
           onError={() => setBackdropError(true)}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background to-background/60" />
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to top, ${colorHex}cc, transparent)`
+          }}
+        />
         
         <div className="absolute left-4 top-4">
           <Link
@@ -74,7 +95,10 @@ export function ArtistDetail({
         </div>
 
         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
-          <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-background">
+          <div 
+            className="relative h-32 w-32 overflow-hidden rounded-full border-4"
+            style={{ borderColor: colorHex }}
+          >
             <img
               src={coverSrc}
               alt={`${artist.name}'s cover`}
@@ -94,7 +118,12 @@ export function ArtistDetail({
           {sortedReleases.map((release) => (
             <div
               key={release.id}
-              className="rounded-lg bg-card p-4 shadow transition-shadow hover:shadow-md"
+              className="rounded-lg p-4 shadow transition-shadow hover:shadow-md"
+              style={{
+                backgroundColor: `${colorHex}11`,
+                borderColor: `${colorHex}22`,
+                borderWidth: '1px'
+              }}
             >
               <time className="text-sm text-muted-foreground">
                 {formatDate(release.releaseDate)}

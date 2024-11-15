@@ -1,18 +1,72 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Layout } from "./components/ui/Layout";
 import { ArtistGrid } from "./components/artists/ArtistGrid";
 import { ArtistDetail } from "./components/artists/ArtistDetail";
 import { ReleaseList } from "./components/releases/ReleaseList";
 import { Settings } from "./components/settings/Settings";
 import { Artist, Release, Settings as SettingsType, DEFAULT_SETTINGS } from "./lib/utils";
+import { loadArtistsConfig } from "./lib/utils/config";
+
+function ArtistDetailWrapper({ artists }: { artists: Artist[] }) {
+  const { name } = useParams();
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  
+  const artist = artists.find(a => a.name === name);
+  
+  if (!artist) {
+    return <Navigate to="/artists" replace />;
+  }
+
+  // Calculate available years from artist's releases
+  const availableYears = useMemo(() => {
+    const years = new Set(artist.releases.map(release => 
+      new Date(release.releaseDate).getFullYear()
+    ));
+    return Array.from(years).sort((a, b) => b - a); // Sort descending
+  }, [artist.releases]);
+
+  // If no years available, include current year
+  if (availableYears.length === 0) {
+    availableYears.push(new Date().getFullYear());
+  }
+
+  return (
+    <ArtistDetail
+      artist={artist}
+      availableYears={availableYears}
+      selectedYear={selectedYear}
+      onYearChange={setSelectedYear}
+    />
+  );
+}
 
 export default function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<SettingsType>(() => {
     const saved = localStorage.getItem("trackly-settings");
     return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
   });
+
+  // Load artists from config on mount
+  useEffect(() => {
+    async function loadArtists() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const artistsData = await loadArtistsConfig();
+        setArtists(artistsData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load artists');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadArtists();
+  }, []);
 
   // Apply theme on mount and when it changes
   useEffect(() => {
@@ -34,7 +88,6 @@ export default function App() {
 
   const handleClearData = () => {
     setArtists([]);
-    // You might want to clear other data as well
   };
 
   const handleThemeToggle = () => {
@@ -55,6 +108,22 @@ export default function App() {
   const sortedReleases = [...allReleases].sort(
     (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Loading artists...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -78,14 +147,7 @@ export default function App() {
           />
           <Route
             path="/artists/:name"
-            element={
-              <ArtistDetail
-                artist={artists[0]} // This should be looked up by name
-                availableYears={[2024, 2023, 2022]} // This should be computed from actual data
-                selectedYear={2024}
-                onYearChange={() => {}} // This should be implemented
-              />
-            }
+            element={<ArtistDetailWrapper artists={artists} />}
           />
           <Route
             path="/releases"
@@ -93,7 +155,7 @@ export default function App() {
               <ReleaseList
                 releases={sortedReleases}
                 hasMore={false}
-                onLoadMore={() => {}} // Implement if needed
+                onLoadMore={() => {}}
               />
             }
           />

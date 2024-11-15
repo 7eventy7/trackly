@@ -1,0 +1,34 @@
+{
+  "notified_albums": [
+    {
+      "artist": "Kodak Black",
+      "album": "Dieuson Octave",
+      "release_date": "2024-11-01",
+      "notified_at": "2024-11-13T03:40:31.237182"
+    },
+    {
+      "artist": "Young Nudy",
+      "album": "Sli\u2019merre 2",
+      "release_date": "2024-11-13",
+      "notified_at": "2024-11-13T03:51:09.914273"
+    },
+    {
+      "artist": "DC the Don",
+      "album": "SACRED HEART 2 (+)",
+      "release_date": "2024-03-15",
+      "notified_at": "2024-11-13T04:01:50.444066"
+    },
+    {
+      "artist": "MadeinTYO",
+      "album": "Time After Time",
+      "release_date": "2024-09-13",
+      "notified_at": "2024-11-13T04:12:00.914849"
+    },
+    {
+      "artist": "Yung Gravy",
+      "album": "Serving Country",
+      "release_date": "2024-08-02",
+      "notified_at": "2024-11-13T04:22:11.515770"
+    }
+  ]
+}
