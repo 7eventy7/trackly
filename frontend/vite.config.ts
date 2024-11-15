@@ -2,23 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 11888,
-    host: '0.0.0.0',
+    host: '0.0.0.0', // This allows access from other machines
+    strictPort: true, // This ensures it only uses the specified port
     fs: {
-      strict: false,
-      allow: ['..']
+      // Allow serving files from one level up to access data and config directories
+      allow: ['..', '/data']
     }
   },
+  // Alias both /config and /data paths
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '~data': path.resolve(__dirname, '../data')
+      '/data': '/data'  // Use absolute path since it's mounted at root in container
     }
-  },
-  // Add static file serving configuration
-  publicDir: path.resolve(__dirname, '../'),
-  base: '/'
+  }
 })
