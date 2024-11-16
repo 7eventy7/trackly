@@ -47,13 +47,6 @@ Trackly is designed to work with Jellyfin's music library organization. The back
         └── music files...
 ```
 
-### Important Notes:
-- Each artist must have their own folder
-- Artist folders must contain a `backdrop.png` for artist visualization
-- Artist folders must contain a `cover.png` for artist artwork
-- Each album must be in its own folder within the artist's folder
-- This structure is required for proper integration with both Jellyfin and Trackly
-
 ## 🚀 Getting Started
 
 ### Using Docker Compose (Recommended)
