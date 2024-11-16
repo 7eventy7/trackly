@@ -56,6 +56,8 @@ Trackly is designed to work with Jellyfin's music library organization. The back
 
 ## 🚀 Getting Started
 
+> **Important**: Each Trackly container can only track one music library. If you need to track multiple music libraries, you'll need to set up separate containers for each library.
+
 ### Using Docker Compose (Recommended)
 
 1. Clone the repository:
