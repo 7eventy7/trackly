@@ -110,11 +110,11 @@ export function ArtistDetail({
           {sortedReleases.map((release) => (
             <div
               key={release.id}
-              className="rounded-lg p-4 shadow transition-shadow hover:shadow-md"
+              className="relative rounded-lg bg-card p-4 shadow transition-shadow hover:shadow-md"
               style={{
-                backgroundColor: `${colorHex}11`,
-                borderColor: `${colorHex}22`,
-                borderWidth: '1px'
+                borderWidth: '4px',
+                borderStyle: 'solid',
+                borderColor: `${colorHex}80`
               }}
             >
               <time className="text-sm text-muted-foreground">

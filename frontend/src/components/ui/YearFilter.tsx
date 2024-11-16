@@ -87,12 +87,6 @@ export function YearFilter({
     checkAvailableYears();
   }, [checkYearsFromFiles, propAvailableYears]);
 
-  useEffect(() => {
-    if (availableYears.length > 0 && value === "all") {
-      onChange(availableYears[0]);
-    }
-  }, [availableYears, value, onChange]);
-
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger 
