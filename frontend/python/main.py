@@ -552,18 +552,27 @@ def main() -> None:
             mark_startup_complete()
         
         # 3. Artists File Check & 4. MusicBrainz API Queries
+        initial_scan_needed = False
         if not artists_file_exists():
             logger.info("artists.json not found, performing initial scan...")
+            initial_scan_needed = True
             if not update_artist_list():
                 raise RuntimeError("Failed to perform initial artist list update")
-        
-        # 5. Validation
         elif not is_valid_artists_file():
             logger.info("artists.json exists but is invalid, updating it...")
+            initial_scan_needed = True
             if not update_artist_list():
                 raise RuntimeError("Failed to update artists.json")
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
+        
+        # Check if notified_<year>.json exists before performing release scan during initial scan
+        current_year = datetime.now().year
+        if initial_scan_needed and os.path.exists(get_notified_file_path(current_year)):
+            logger.info("Performing release scan during initial scan as notified file exists...")
+            check_new_releases(notify_on_scan)
+        else:
+            logger.info("Skipping release scan during initial scan as notified file does not exist")
         
         # Ensure current year's notified file exists
         ensure_notified_file()

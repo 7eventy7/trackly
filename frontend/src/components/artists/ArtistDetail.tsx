@@ -92,9 +92,9 @@ export function ArtistDetail({
         </div>
 
         {/* Profile Picture Container */}
-        <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-64px' }}>
+        <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-96px' }}>
           <div 
-            className="relative h-32 w-32 overflow-hidden rounded-full border-4 shadow-lg"
+            className="relative h-48 w-48 overflow-hidden rounded-full border-4 shadow-lg"
             style={{ borderColor: colorHex }}
           >
             <img
@@ -108,7 +108,7 @@ export function ArtistDetail({
       </div>
 
       {/* Content Section */}
-      <div className="mt-24 text-center">
+      <div className="mt-32 text-center">
         <h1 className="text-3xl font-bold">{artist.name}</h1>
       </div>
 
