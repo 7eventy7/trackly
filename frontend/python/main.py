@@ -11,7 +11,6 @@ from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from croniter import croniter, CroniterNotAlphaError, CroniterBadCronError
 
-# Set up logging with more detailed format
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
@@ -19,7 +18,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Constants
 DATA_DIR = "/data"
 MUSIC_DIR = "/music"
 ARTISTS_FILE_PATH: str = os.path.join(DATA_DIR, "artists.json")
@@ -31,33 +29,20 @@ MAX_RETRIES: int = 3
 STALE_FILE_DAYS: int = 7
 
 def get_notified_file_path(year: Optional[int] = None) -> str:
-    """
-    Get the notified file path for a specific year.
-    If year is not provided, uses the current year.
-    """
     target_year = year if year is not None else datetime.now().year
     return os.path.join(DATA_DIR, f"notified_{target_year}.json")
 
 def ensure_notified_file(year: Optional[int] = None) -> None:
-    """
-    Ensure the notified file exists for the specified year.
-    If year is not provided, uses the current year.
-    """
     file_path = get_notified_file_path(year)
     if not os.path.exists(file_path):
         logger.info(f"Creating new notified file for year {year or datetime.now().year}")
         safe_write_json(file_path, {'notified_albums': []})
 
 def check_year_change() -> None:
-    """
-    Check if the year has changed and create new notified file if needed.
-    Keeps previous years' files intact for history.
-    """
     current_year = datetime.now().year
     ensure_notified_file(current_year)
 
 def ensure_config_directory() -> None:
-    """Ensure data directory exists and has proper permissions"""
     try:
         data_dir = Path(DATA_DIR)
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -67,7 +52,6 @@ def ensure_config_directory() -> None:
         raise
 
 def load_config() -> Tuple[str, str, str, Optional[str], bool]:
-    """Load and validate environment variables"""
     load_dotenv()
     
     required_vars = {
@@ -103,19 +87,16 @@ def load_config() -> Tuple[str, str, str, Optional[str], bool]:
     )
 
 def is_first_startup() -> bool:
-    """Check if this is the first time the container is starting"""
     startup_data = safe_read_json(STARTUP_FILE_PATH)
     return startup_data is None or not startup_data.get('initial_startup_complete', False)
 
 def mark_startup_complete() -> None:
-    """Mark the initial startup as complete"""
     safe_write_json(STARTUP_FILE_PATH, {
         'initial_startup_complete': True,
         'first_startup_time': datetime.now().isoformat()
     })
 
 def send_startup_notification(webhook_url: str, discord_role: Optional[str]) -> None:
-    """Send a Discord notification when the container starts for the first time"""
     logger.info("Sending initial startup notification to Discord")
     
     embed = {
@@ -142,7 +123,6 @@ def send_startup_notification(webhook_url: str, discord_role: Optional[str]) -> 
         logger.error(f"Failed to send startup notification: {str(e)}")
 
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
-    """Safely read and parse a JSON file with proper error handling"""
     try:
         if not os.path.exists(file_path):
             logger.info(f"File not found: {file_path}")
@@ -158,7 +138,6 @@ def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
         return None
 
 def safe_write_json(file_path: str, data: Dict[str, Any]) -> bool:
-    """Safely write data to a JSON file with validation"""
     try:
         temp_path = f"{file_path}.tmp"
         with open(temp_path, 'w') as f:
@@ -180,7 +159,6 @@ def safe_write_json(file_path: str, data: Dict[str, Any]) -> bool:
         return False
 
 def artists_file_exists() -> bool:
-    """Check if artists.json exists"""
     return os.path.exists(ARTISTS_FILE_PATH)
 
 class RateLimiter:
@@ -227,7 +205,6 @@ class RateLimiter:
         self.consecutive_failures += 1
 
 def make_musicbrainz_request(url: str, params: Dict[str, Any], rate_limiter: RateLimiter) -> Optional[Dict[str, Any]]:
-    """Make a rate-limited request to MusicBrainz API with retries"""
     headers = {
         'User-Agent': USER_AGENT,
         'Accept': 'application/json'
@@ -254,7 +231,6 @@ def make_musicbrainz_request(url: str, params: Dict[str, Any], rate_limiter: Rat
     return None
 
 def get_artist_id(artist_name: str, rate_limiter: RateLimiter) -> Optional[str]:
-    """Get MusicBrainz ID for an artist"""
     url = f"{MUSICBRAINZ_BASE_URL}/artist"
     params = {
         'query': artist_name,
@@ -272,7 +248,6 @@ def get_artist_id(artist_name: str, rate_limiter: RateLimiter) -> Optional[str]:
         return None
 
 def generate_vibrant_color() -> int:
-    """Generate a vibrant color using HSV color space"""
     hue = random.random()
     saturation = random.uniform(0.7, 1.0)
     value = random.uniform(0.8, 1.0)
@@ -280,7 +255,6 @@ def generate_vibrant_color() -> int:
     return int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
 
 def update_artist_list() -> bool:
-    """Update the JSON list of artists from the music directory"""
     logger.info("Updating artist list...")
     rate_limiter = RateLimiter()
     
@@ -308,7 +282,6 @@ def update_artist_list() -> bool:
         return False
 
 def is_valid_artists_file() -> bool:
-    """Check if artists.json contains valid data"""
     data = safe_read_json(ARTISTS_FILE_PATH)
     if not data:
         return False
@@ -339,7 +312,6 @@ def is_valid_artists_file() -> bool:
         return False
 
 def format_release_date(date_str: str) -> str:
-    """Format release date to a more readable format"""
     try:
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
         return date_obj.strftime('%B %d, %Y')
@@ -347,7 +319,6 @@ def format_release_date(date_str: str) -> str:
         return date_str
 
 def is_album_notified(artist: str, album: str) -> bool:
-    """Check if an album has already been notified"""
     try:
         release_year = datetime.now().year
         notified_file = get_notified_file_path(release_year)
@@ -364,7 +335,6 @@ def is_album_notified(artist: str, album: str) -> bool:
         return False
 
 def add_notified_album(artist: str, album: str, release_date: str) -> bool:
-    """Add an album to the notified albums list with validation"""
     try:
         release_year = datetime.now().year
         notified_file = get_notified_file_path(release_year)
@@ -385,7 +355,6 @@ def add_notified_album(artist: str, album: str, release_date: str) -> bool:
         return False
 
 def send_discord_notification(release_info: Dict[str, str], artist_color: Optional[int], is_scan_notification: bool = False) -> None:
-    """Send Discord notification for new release or scan completion with rate limiting"""
     webhook_url = os.getenv('DISCORD_WEBHOOK')
     discord_role = os.getenv('DISCORD_ROLE')
     
@@ -439,7 +408,6 @@ def process_release_group(
     artist_color: Optional[int],
     current_year: int
 ) -> None:
-    """Process a single release group for new albums"""
     release_date = release_group.get('first-release-date', '')
     if not release_date.startswith(str(current_year)):
         return
@@ -460,7 +428,6 @@ def process_release_group(
             send_discord_notification(release_info, artist_color)
 
 def check_artist_releases(artist: Dict[str, Any], rate_limiter: RateLimiter, current_year: int) -> None:
-    """Check releases for a single artist"""
     if not artist['id']:
         logger.warning(f"Skipping {artist['name']} - no MusicBrainz ID")
         return
@@ -489,10 +456,8 @@ def check_artist_releases(artist: Dict[str, Any], rate_limiter: RateLimiter, cur
         logger.error(f"Error checking releases for {artist['name']}: {str(e)}")
 
 def check_new_releases(notify_on_scan: bool = False) -> None:
-    """Check for new releases from tracked artists"""
     logger.info("Starting the scheduled scan...")
     
-    # Pre-scan Checks
     if not artists_file_exists():
         logger.info("artists.json not found, creating it...")
         if not update_artist_list():
@@ -506,7 +471,6 @@ def check_new_releases(notify_on_scan: bool = False) -> None:
     
     check_year_change()
     
-    # Release Check Process
     logger.info("Checking for new releases...")
     rate_limiter = RateLimiter()
     data = safe_read_json(ARTISTS_FILE_PATH)
@@ -525,16 +489,12 @@ def check_new_releases(notify_on_scan: bool = False) -> None:
         if new_releases_found:
             break
     
-    # Scan Completion
     if notify_on_scan and not new_releases_found:
         send_discord_notification({}, None, True)
     
     logger.info("Completed the scheduled scan")
 
 def should_perform_release_scan(initial_scan: bool) -> bool:
-    """
-    Determine if a release scan should be performed based on the existence of notified_<year>.json
-    """
     current_year = datetime.now().year
     notified_file_path = get_notified_file_path(current_year)
     
@@ -549,21 +509,17 @@ def should_perform_release_scan(initial_scan: bool) -> bool:
     return True
 
 def main() -> None:
-    """Main function to run the artist tracker"""
     logger.info("Starting Trackly...")
     
     try:
-        # 1. Environment Setup
         ensure_config_directory()
         music_path, cron_schedule, webhook_url, discord_role, notify_on_scan = load_config()
         
-        # 2. Startup Check & Notification
         initial_scan = is_first_startup()
         if initial_scan:
             send_startup_notification(webhook_url, discord_role)
             mark_startup_complete()
         
-        # 3. Artists File Check & Initial Setup
         artists_update_needed = False
         if not artists_file_exists():
             logger.info("artists.json not found, performing initial scan...")
@@ -578,18 +534,16 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
         
-        # 4. Determine if release scan should be performed
         if artists_update_needed:
             if should_perform_release_scan(True):
                 logger.info("Performing initial release scan...")
                 check_new_releases(notify_on_scan)
-                ensure_notified_file()  # Create the file after the scan
+                ensure_notified_file()
             else:
                 logger.info("Skipping initial release scan as notified file exists")
         
         logger.info("Trackly startup complete - configuration validated")
         
-        # 5. Start Scheduled Scan
         cron = croniter(cron_schedule, datetime.now())
         
         while True:
@@ -601,7 +555,6 @@ def main() -> None:
                 logger.info(f"Sleeping until next scheduled run at {next_run}")
                 time.sleep(sleep_seconds)
             
-            # Regular scheduled scans always perform release check
             check_new_releases(notify_on_scan)
             
     except Exception as e:

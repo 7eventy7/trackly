@@ -20,15 +20,13 @@ function ArtistDetailWrapper({ artists }: { artists: Artist[] }) {
     return <Navigate to="/artists" replace />;
   }
 
-  // Calculate available years from artist's releases
   const availableYears = useMemo(() => {
     const years = new Set(artist.releases.map(release => 
       new Date(release.releaseDate).getFullYear()
     ));
-    return Array.from(years).sort((a, b) => b - a); // Sort descending
+    return Array.from(years).sort((a, b) => b - a);
   }, [artist.releases]);
 
-  // If no years available, include current year
   if (availableYears.length === 0) {
     availableYears.push(new Date().getFullYear());
   }
@@ -80,7 +78,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
   });
 
-  // Load artists from config on mount
   useEffect(() => {
     async function loadArtists() {
       try {
@@ -98,7 +95,6 @@ export default function App() {
     loadArtists();
   }, []);
 
-  // Apply theme on mount and when it changes
   useEffect(() => {
     if (settings.theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -107,7 +103,6 @@ export default function App() {
     }
   }, [settings.theme]);
 
-  // Save settings to localStorage when they change
   useEffect(() => {
     localStorage.setItem("trackly-settings", JSON.stringify(settings));
   }, [settings]);
@@ -126,7 +121,6 @@ export default function App() {
     });
   };
 
-  // Get all releases across all artists
   const allReleases: Release[] = artists.flatMap((artist) =>
     artist.releases.map((release) => ({
       ...release,
@@ -134,12 +128,10 @@ export default function App() {
     }))
   );
 
-  // Sort releases by date (newest first)
   const sortedReleases = [...allReleases].sort(
     (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
   );
 
-  // Create artistColors map
   const artistColors = useMemo(() => {
     const colorMap: Record<string, number> = {};
     artists.forEach(artist => {

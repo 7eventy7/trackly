@@ -18,7 +18,6 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
   const [localImageError, setLocalImageError] = useState(false);
   const [fallbackImageError, setFallbackImageError] = useState(false);
 
-  // Determine which image source to use
   const imageSrc = localImageError 
     ? (fallbackImage && !fallbackImageError ? fallbackImage : '/icons/trackly.png')
     : `/music/${encodeURIComponent(name)}/cover.png`;
@@ -33,10 +32,8 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
 
   const handleImageError = () => {
     if (!localImageError) {
-      // First error - try fallback image
       setLocalImageError(true);
     } else if (!fallbackImageError && fallbackImage) {
-      // Second error - mark fallback as failed too
       setFallbackImageError(true);
     }
   };

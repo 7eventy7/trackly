@@ -38,7 +38,6 @@ export function Layout({ children, theme, onThemeToggle, headerExtra }: LayoutPr
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <aside className="fixed bottom-0 left-0 top-0 z-20 w-64 border-r bg-card px-3 py-4 lg:relative">
         <div className="mb-8 flex items-center gap-2 px-3">
           <img src="/icons/trackly.png" alt="Trackly" className="h-8 w-8" />
@@ -71,9 +70,7 @@ export function Layout({ children, theme, onThemeToggle, headerExtra }: LayoutPr
         </nav>
       </aside>
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col">
-        {/* Header */}
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center gap-6">
@@ -96,7 +93,6 @@ export function Layout({ children, theme, onThemeToggle, headerExtra }: LayoutPr
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>

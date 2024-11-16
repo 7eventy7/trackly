@@ -26,7 +26,6 @@ export function ArtistGrid({
     onItemsPerRowChange?.(newValue);
   };
 
-  // Sort artists alphabetically by name
   const sortedArtists = [...artists].sort((a, b) => 
     a.name.localeCompare(b.name)
   );

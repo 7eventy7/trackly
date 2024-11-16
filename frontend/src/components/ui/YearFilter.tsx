@@ -42,21 +42,17 @@ export function YearFilter({
             if (response.ok) {
               years.push(year);
             }
-          } catch {
-            // Silently ignore missing year files
-          }
+          } catch {}
         };
 
         const currentYear = new Date().getFullYear();
         const futureYears = 10;
         const pastYears = 10;
 
-        // Check future years (including current)
         for (let year = currentYear; year <= currentYear + futureYears; year++) {
           yearChecks.push(checkYear(year));
         }
 
-        // Check past years
         for (let year = currentYear - 1; year >= currentYear - pastYears; year--) {
           yearChecks.push(checkYear(year));
         }
@@ -91,7 +87,6 @@ export function YearFilter({
     checkAvailableYears();
   }, [checkYearsFromFiles, propAvailableYears]);
 
-  // Default to current year if available, otherwise "all"
   useEffect(() => {
     if (availableYears.length > 0 && value === "all") {
       onChange(availableYears[0]);

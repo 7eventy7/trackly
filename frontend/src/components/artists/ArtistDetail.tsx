@@ -30,7 +30,6 @@ export function ArtistDetail({
     : `/music/${encodeURIComponent(artist.name)}/cover.png`;
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
-  // Filter releases for the selected period
   const filteredReleases = useMemo(() => {
     if (selectedPeriod === "all") {
       return artist.releases;
@@ -42,7 +41,6 @@ export function ArtistDetail({
     });
   }, [artist.releases, selectedPeriod]);
 
-  // Sort releases by date (newest first)
   const sortedReleases = useMemo(() => {
     return [...filteredReleases].sort(
       (a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
@@ -51,9 +49,7 @@ export function ArtistDetail({
 
   return (
     <div className="min-h-screen">
-      {/* Backdrop Container */}
       <div className="relative mx-auto" style={{ maxWidth: '622px' }}>
-        {/* Backdrop Image Container */}
         <div className="h-[350px] overflow-hidden rounded-lg">
           <img
             src={backdropSrc}
@@ -71,7 +67,6 @@ export function ArtistDetail({
           />
         </div>
 
-        {/* Navigation and Year Selection */}
         <div className="absolute left-4 top-4">
           <Link
             to="/artists"
@@ -91,7 +86,6 @@ export function ArtistDetail({
           />
         </div>
 
-        {/* Profile Picture Container */}
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-96px' }}>
           <div 
             className="relative h-48 w-48 overflow-hidden rounded-full border-4 shadow-lg"
@@ -107,7 +101,6 @@ export function ArtistDetail({
         </div>
       </div>
 
-      {/* Content Section */}
       <div className="mt-32 text-center">
         <h1 className="text-3xl font-bold">{artist.name}</h1>
       </div>
