@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Artist, FALLBACK_BACKDROP, formatDate } from "../../lib/utils";
+import { YearFilter, FilterPeriod } from "../ui/YearFilter";
 
 interface ArtistDetailProps {
   artist: Artist;
   availableYears: number[];
-  selectedYear: number;
-  onYearChange: (year: number) => void;
+  selectedPeriod: FilterPeriod;
+  onPeriodChange: (period: FilterPeriod) => void;
 }
 
 function numberToHex(num: number): string {
@@ -18,8 +18,8 @@ function numberToHex(num: number): string {
 export function ArtistDetail({
   artist,
   availableYears,
-  selectedYear,
-  onYearChange,
+  selectedPeriod,
+  onPeriodChange,
 }: ArtistDetailProps) {
   const [backdropError, setBackdropError] = useState(false);
   const [coverError, setCoverError] = useState(false);
@@ -30,13 +30,17 @@ export function ArtistDetail({
     : `/music/${encodeURIComponent(artist.name)}/cover.png`;
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
-  // Filter releases for the selected year
+  // Filter releases for the selected period
   const filteredReleases = useMemo(() => {
+    if (selectedPeriod === "all") {
+      return artist.releases;
+    }
+
     return artist.releases.filter(release => {
       const releaseYear = new Date(release.releaseDate).getFullYear();
-      return releaseYear === selectedYear;
+      return releaseYear === selectedPeriod;
     });
-  }, [artist.releases, selectedYear]);
+  }, [artist.releases, selectedPeriod]);
 
   // Sort releases by date (newest first)
   const sortedReleases = useMemo(() => {
@@ -47,7 +51,7 @@ export function ArtistDetail({
 
   return (
     <div className="min-h-screen">
-      {/* Backdrop Container - Modified to handle overflow properly */}
+      {/* Backdrop Container */}
       <div className="relative mx-auto" style={{ maxWidth: '622px' }}>
         {/* Backdrop Image Container */}
         <div className="h-[350px] overflow-hidden rounded-lg">
@@ -67,7 +71,7 @@ export function ArtistDetail({
           />
         </div>
 
-        {/* Navigation and Year Selection - Adjusted positioning */}
+        {/* Navigation and Year Selection */}
         <div className="absolute left-4 top-4">
           <Link
             to="/artists"
@@ -79,31 +83,15 @@ export function ArtistDetail({
         </div>
 
         <div className="absolute right-4 top-4">
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger className="flex items-center gap-1 rounded-lg bg-background/80 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-background/90">
-              {selectedYear}
-              <ChevronDown className="h-4 w-4" />
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="min-w-[8rem] rounded-lg bg-popover p-1 shadow-md"
-                sideOffset={5}
-              >
-                {availableYears.map((year) => (
-                  <DropdownMenu.Item
-                    key={year}
-                    className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-                    onSelect={() => onYearChange(year)}
-                  >
-                    {year}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <YearFilter
+            value={selectedPeriod}
+            onChange={onPeriodChange}
+            availableYears={availableYears}
+            className="bg-background/80 backdrop-blur-sm hover:bg-background/90"
+          />
         </div>
 
-        {/* Profile Picture Container - Improved positioning */}
+        {/* Profile Picture Container */}
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-64px' }}>
           <div 
             className="relative h-32 w-32 overflow-hidden rounded-full border-4 shadow-lg"
@@ -119,7 +107,7 @@ export function ArtistDetail({
         </div>
       </div>
 
-      {/* Content Section - Adjusted spacing to accommodate profile picture */}
+      {/* Content Section */}
       <div className="mt-24 text-center">
         <h1 className="text-3xl font-bold">{artist.name}</h1>
       </div>
@@ -146,7 +134,11 @@ export function ArtistDetail({
 
         {sortedReleases.length === 0 && (
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed">
-            <p className="text-muted-foreground">No releases found for {selectedYear}</p>
+            <p className="text-muted-foreground">
+              {selectedPeriod === "all" 
+                ? "No releases found"
+                : `No releases found for ${selectedPeriod}`}
+            </p>
           </div>
         )}
       </div>

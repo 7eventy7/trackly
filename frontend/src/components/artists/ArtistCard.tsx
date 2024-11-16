@@ -26,8 +26,9 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
   const colorHex = color ? numberToHex(color) : '#000000';
 
   const gradientStyle: CSSProperties = {
-    background: `linear-gradient(to top, ${colorHex}ff, ${colorHex}00)`,
-    paddingBottom: '0.75rem' // Reduced padding to move name closer to bottom
+    background: `linear-gradient(to top, ${colorHex}ff, ${colorHex}00 70%)`,
+    transition: 'background 0.3s ease-in-out',
+    paddingBottom: '0.75rem'
   };
 
   const handleImageError = () => {
@@ -44,7 +45,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
     <Link
       to={`/artists/${encodeURIComponent(name)}`}
       className={cn(
-        "group relative block rounded-lg bg-card transition-all hover:scale-105 focus:outline-none border-4",
+        "group relative block rounded-lg bg-card transition-all focus:outline-none border-2 overflow-hidden",
         className
       )}
       style={{ borderColor: colorHex }}
@@ -54,14 +55,14 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
           src={imageSrc}
           alt={`${name}'s cover`}
           onError={handleImageError}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-300"
         />
       </div>
       <div 
-        className="absolute inset-x-0 bottom-0 px-4 pb-2 pt-8"
+        className="absolute inset-x-0 bottom-0 px-4 pb-3 pt-12 transition-all duration-300 group-hover:pt-24"
         style={gradientStyle}
       >
-        <h3 className="text-center text-lg font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,1)] backdrop-blur-[3px]">
+        <h3 className="text-center text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
           {name}
         </h3>
       </div>
