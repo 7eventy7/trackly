@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 119 100% 87%;
+    --foreground: 120 50% 15%;
+
+    --card: 119 100% 87%;
+    --card-foreground: 120 50% 15%;
+ 
+    --popover: 119 100% 87%;
+    --popover-foreground: 120 50% 15%;
+ 
+    --primary: 157 100% 50%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 120 70% 82%;
+    --secondary-foreground: 120 50% 15%;
+ 
+    --muted: 120 70% 82%;
+    --muted-foreground: 120 30% 35%;
+ 
+    --accent: 120 70% 82%;
+    --accent-foreground: 120 50% 15%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 120 60% 75%;
+    --input: 120 60% 75%;
+    --ring: 157 100% 50%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 157 100% 50%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 157 100% 50%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.artist-grid {
+  display: grid;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.artist-card {
+  @apply relative overflow-hidden rounded-lg bg-card;
+  transition: transform 0.3s ease;
+}
+
+.artist-card:hover {
+  transform: scale(1.02);
+}
+
+.artist-image {
+  @apply aspect-square w-full object-cover;
+}
+
+.artist-name {
+  @apply p-2 text-center font-medium;
+}
+
+.banner-image {
+  @apply aspect-video w-full object-cover;
+}
+
+.release-card {
+  @apply rounded-lg bg-card p-4 shadow-sm transition-all hover:shadow-md;
+}
+
+.release-date {
+  @apply text-sm text-muted-foreground;
+}
+
+.release-title {
+  @apply mt-1 font-medium;
+}
+
+.settings-section {
+  @apply space-y-4 rounded-lg border p-4;
+}
+
+.settings-title {
+  @apply text-lg font-medium;
+}
+
+.port-input {
+  @apply mt-2 w-full max-w-xs;
+}
+
+.confirmation-dialog {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm;
+}
+
+.dialog-content {
+  @apply rounded-lg bg-card p-6 shadow-lg;
+}
+
+.dialog-title {
+  @apply text-lg font-semibold;
+}
+
+.dialog-description {
+  @apply mt-2 text-sm text-muted-foreground;
+}
+
+.dialog-input {
+  @apply mt-4 w-full;
+}
+
+.dialog-buttons {
+  @apply mt-4 flex justify-end space-x-2;
+}
