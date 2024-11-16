@@ -11,6 +11,8 @@
 
 A modern web application designed to enhance your Jellyfin music library experience. Browse your collection with a beautiful interface and optionally receive Discord notifications for new releases from your favorite artists.
 
+[📸 View Interface Gallery](GALLERY.md)
+
 </div>
 
 ---
