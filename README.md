@@ -65,7 +65,8 @@ cd trackly
 ```
 
 2. Configure the application:<br>
-Edit the `docker-compose.yml` file to set your desired configuration. You can configure:
+- Edit the `docker-compose.yml` file to set your desired configuration. <br>
+- View the envioronmental variables section below.
 
 3. Start the application:
 ```bash
