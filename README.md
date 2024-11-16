@@ -2,7 +2,7 @@
 
 # <img src="frontend/public/icons/trackly.png" width="32" height="32" alt="Trackly Icon"> Trackly
 
-### A web-based interface for tracking music releases.
+### A web app for tracking music releases
 
 [![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly.svg?style=social&label=Star&maxAge=2592000)](https://github.com/7eventy7/trackly/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/issues)
