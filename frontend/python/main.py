@@ -566,16 +566,18 @@ def main() -> None:
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
         
-        # Check if notified_<year>.json exists before performing release scan during initial scan
+        # Check if notified_<year>.json exists and perform release scan accordingly
         current_year = datetime.now().year
-        if initial_scan_needed and os.path.exists(get_notified_file_path(current_year)):
-            logger.info("Performing release scan during initial scan as notified file exists...")
-            check_new_releases(notify_on_scan)
-        else:
-            logger.info("Skipping release scan during initial scan as notified file does not exist")
+        notified_file_path = get_notified_file_path(current_year)
         
-        # Ensure current year's notified file exists
-        ensure_notified_file()
+        if initial_scan_needed:
+            if not os.path.exists(notified_file_path):
+                logger.info("Notified file not found during initial scan, performing release scan...")
+                check_new_releases(notify_on_scan)
+                ensure_notified_file()  # Create the file after the scan
+            else:
+                logger.info("Notified file exists during initial scan, skipping release scan...")
+        
         logger.info("Trackly startup complete - configuration validated")
         
         # 6. Start Scheduled Scan
