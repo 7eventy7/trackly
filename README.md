@@ -64,11 +64,8 @@ git clone https://github.com/7eventy7/trackly.git
 cd trackly
 ```
 
-2. Configure your environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your settings
-```
+2. Configure the application:
+Edit the `docker-compose.yml` file to set your desired configuration. You can configure:
 
 3. Start the application:
 ```bash
@@ -78,10 +75,12 @@ docker-compose up -d
 ## ⚙️ Configuration
 
 ### Environment Variables
-- `UPDATE_INTERVAL`: Cron schedule for checking new releases (required)
+These can be configured in the docker-compose.yml file:
+- `UPDATE_INTERVAL`: Cron schedule for checking new releases (default: "0 0 * * *")
 - `DISCORD_WEBHOOK`: Discord webhook URL for notifications (optional)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
-- `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (optional)
+- `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (default: false)
+- `DISCORD_NOTIFY`: Enable/disable Discord notifications during scan (default: true)
 
 ### Volumes
 - `/music`: Mount your Jellyfin music directory here
