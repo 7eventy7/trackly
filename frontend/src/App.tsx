@@ -4,7 +4,8 @@ import * as Slider from "@radix-ui/react-slider";
 import { Layout } from "./components/ui/Layout";
 import { ArtistGrid } from "./components/artists/ArtistGrid";
 import { ArtistDetail } from "./components/artists/ArtistDetail";
-import { ReleaseList, ReleaseFilter, FilterPeriod } from "./components/releases/ReleaseList";
+import { ReleaseList } from "./components/releases/ReleaseList";
+import { YearFilter, FilterPeriod } from "./components/ui/YearFilter";
 import { Settings } from "./components/settings/Settings";
 import { Artist, Release, Settings as SettingsType, DEFAULT_SETTINGS } from "./lib/utils";
 import { loadArtistsConfig } from "./lib/utils/config";
@@ -36,8 +37,8 @@ function ArtistDetailWrapper({ artists }: { artists: Artist[] }) {
     <ArtistDetail
       artist={artist}
       availableYears={availableYears}
-      selectedYear={selectedYear}
-      onYearChange={setSelectedYear}
+      selectedPeriod={selectedYear}
+      onPeriodChange={setSelectedYear}
     />
   );
 }
@@ -174,9 +175,11 @@ export default function App() {
     }
     if (pathname === "/releases") {
       return (
-        <ReleaseFilter
+        <YearFilter
           value={filterPeriod}
           onChange={setFilterPeriod}
+          checkYearsFromFiles={true}
+          className="bg-background hover:bg-accent/80"
         />
       );
     }
@@ -238,6 +241,7 @@ export default function App() {
                 onLoadMore={() => {}}
                 artistColors={artistColors}
                 filterPeriod={filterPeriod}
+                onFilterChange={setFilterPeriod}
               />
             </Layout>
           }
