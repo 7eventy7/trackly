@@ -4,27 +4,27 @@ A visual showcase of Trackly's interface in both dark and light themes.
 ## Dark Theme
 
 ### 1. Artists View (Dark)
-![Artists Dark Theme](frontend/public/images/1-artists-dark.png)
+![Artists Dark Theme](frontend/public/images/dark-artists.png)
 
 ### 2. Releases View (Dark)
-![Releases Dark Theme](frontend/public/images/2-releases-dark.png)
+![Releases Dark Theme](frontend/public/images/dark-releases.png)
 
 ### 3. Settings View (Dark)
-![Settings Dark Theme](frontend/public/images/3-settings-dark.png)
+![Settings Dark Theme](frontend/public/images/dark-settings.png)
 
 ### 4. Artist Details (Dark)
-![Artist Details Dark Theme](frontend/public/images/4-specific-dark.png)
+![Artist Details Dark Theme](frontend/public/images/dark-specific.png)
 
 ## Light Theme
 
 ### 1. Artists View (Light)
-![Artists Light Theme](frontend/public/images/1-artists-light.png)
+![Artists Light Theme](frontend/public/images/light-artists.png)
 
 ### 2. Releases View (Light)
-![Releases Light Theme](frontend/public/images/2-releases-light.png)
+![Releases Light Theme](frontend/public/images/light-releases.png)
 
 ### 3. Settings View (Light)
-![Settings Light Theme](frontend/public/images/3-settings-light.png)
+![Settings Light Theme](frontend/public/images/light-settings.png)
 
 ### 4. Artist Details (Light)
-![Artist Details Light Theme](frontend/public/images/4-specific-light.png)
+![Artist Details Light Theme](frontend/public/images/light-specific.png)
