@@ -64,7 +64,7 @@ git clone https://github.com/7eventy7/trackly.git
 cd trackly
 ```
 
-2. Configure the application:
+2. Configure the application:<br>
 Edit the `docker-compose.yml` file to set your desired configuration. You can configure:
 
 3. Start the application:
