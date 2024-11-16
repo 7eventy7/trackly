@@ -69,8 +69,8 @@ chmod -R 755 /data /app/static\n\
 # Start Nginx\n\
 nginx\n\
 \n\
-# Start uWSGI as myuser with output redirected to /dev/null\n\
-exec su -s /bin/sh myuser -c "uwsgi --ini /app/uwsgi.ini > /dev/null 2>&1"\n\
+# Start uWSGI as myuser with custom logger to silence uWSGI logs\n\
+exec su -s /bin/sh myuser -c "uwsgi --ini /app/uwsgi.ini --logger null file:/dev/null"\n\
 ' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Set essential system environment variables

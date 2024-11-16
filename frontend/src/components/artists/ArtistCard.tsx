@@ -26,8 +26,8 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
   const colorHex = color ? numberToHex(color) : '#000000';
 
   const gradientStyle: CSSProperties = {
-    background: `linear-gradient(to top, ${colorHex}ee, ${colorHex}00)`,
-    paddingBottom: '3.5rem' // Increased padding to move name down further
+    background: `linear-gradient(to top, ${colorHex}ff, ${colorHex}00)`,
+    paddingBottom: '0.75rem' // Reduced padding to move name closer to bottom
   };
 
   const handleImageError = () => {
@@ -49,19 +49,19 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
       )}
       style={{ borderColor: colorHex }}
     >
-      <div className="aspect-square w-full overflow-hidden rounded-[0.5rem]">
+      <div className="aspect-square w-full">
         <img
           src={imageSrc}
           alt={`${name}'s cover`}
           onError={handleImageError}
-          className="h-full w-full object-cover rounded-[0.5rem] transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
       <div 
-        className="absolute inset-x-0 bottom-0 p-6 rounded-b-lg"
+        className="absolute inset-x-0 bottom-0 px-4 pb-2 pt-8"
         style={gradientStyle}
       >
-        <h3 className="text-center text-lg font-semibold text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] backdrop-blur-[2px]">
+        <h3 className="text-center text-lg font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,1)] backdrop-blur-[3px]">
           {name}
         </h3>
       </div>
