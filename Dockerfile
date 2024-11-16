@@ -1,4 +1,6 @@
-FROM node:20-slim AS frontend-builder
+# syntax=docker/dockerfile:1
+
+FROM --platform=$BUILDPLATFORM node:20-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -9,7 +11,7 @@ COPY frontend/ ./
 
 RUN npm run build
 
-FROM python:3.12-slim
+FROM --platform=$TARGETPLATFORM python:3.12-slim
 
 WORKDIR /app
 
@@ -68,6 +70,8 @@ EXPOSE 11888
 LABEL maintainer="7eventy7"
 LABEL version="1.0"
 LABEL description="Trackly - Music tracking application"
+LABEL org.opencontainers.image.description="Trackly - Music tracking application"
+LABEL org.opencontainers.image.architecture="amd64,arm64"
 
 RUN useradd -m myuser
 RUN chown -R myuser:myuser /app /music /data
