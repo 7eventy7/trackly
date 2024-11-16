@@ -45,7 +45,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
     <Link
       to={`/artists/${encodeURIComponent(name)}`}
       className={cn(
-        "group relative block rounded-lg bg-card transition-all focus:outline-none border-2 overflow-hidden",
+        "group relative block rounded-lg bg-card transition-all focus:outline-none border-4 z-10",
         className
       )}
       style={{ borderColor: colorHex }}
@@ -55,7 +55,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
           src={imageSrc}
           alt={`${name}'s cover`}
           onError={handleImageError}
-          className="h-full w-full object-cover transition-transform duration-300"
+          className="h-full w-full object-cover transition-transform duration-300 rounded-lg"
         />
       </div>
       <div 

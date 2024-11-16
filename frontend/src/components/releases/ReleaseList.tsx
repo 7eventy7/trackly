@@ -1,3 +1,4 @@
+import React from "react";
 import { YearFilter, FilterPeriod } from "../ui/YearFilter";
 import { Release, formatDate } from "../../lib/utils";
 
@@ -36,15 +37,6 @@ export function ReleaseList({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <YearFilter
-          value={filterPeriod}
-          onChange={onFilterChange}
-          checkYearsFromFiles={true}
-          className="bg-background hover:bg-accent/80"
-        />
-      </div>
-
       <div className="space-y-4">
         {filteredReleases.map((release) => {
           const artistColor = artistColors[release.artist];

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 
@@ -101,7 +101,7 @@ export function YearFilter({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger 
-        className={`flex items-center gap-1 rounded-lg bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent ${className}`}
+        className={`flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${className}`}
         disabled={loading}
       >
         {loading ? (
@@ -115,8 +115,10 @@ export function YearFilter({
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="min-w-[8rem] rounded-lg bg-popover p-1 shadow-md"
+          className="z-[60] min-w-[8rem] rounded-lg bg-popover p-1 shadow-md"
           sideOffset={5}
+          align="end"
+          alignOffset={-5}
         >
           <DropdownMenu.Item
             className="relative flex cursor-pointer select-none items-center rounded-md px-6 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
