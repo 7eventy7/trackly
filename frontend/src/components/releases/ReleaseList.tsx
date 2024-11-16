@@ -47,7 +47,7 @@ export function ReleaseList({
               key={release.id}
               className="relative rounded-lg bg-card p-4 shadow transition-shadow hover:shadow-md"
               style={{
-                borderWidth: '1px',
+                borderWidth: '4px',
                 borderStyle: 'solid',
                 borderColor: `${borderColor}80`
               }}

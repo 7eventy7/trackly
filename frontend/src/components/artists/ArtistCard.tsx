@@ -55,7 +55,7 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
           src={imageSrc}
           alt={`${name}'s cover`}
           onError={handleImageError}
-          className="h-full w-full object-cover transition-transform duration-300 rounded-lg"
+          className="h-full w-full object-cover transition-transform duration-300"
         />
       </div>
       <div 
