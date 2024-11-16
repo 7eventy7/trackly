@@ -15,12 +15,14 @@ export function useVersionCheck(): VersionStatus {
   useEffect(() => {
     const checkVersion = async () => {
       try {
-        const response = await fetch('https://github.com/7eventy7/trackly/releases/latest', {
-          redirect: 'follow'
-        });
+        const response = await fetch('https://api.github.com/repos/7eventy7/trackly/releases/latest');
         
-        const finalUrl = response.url;
-        const latestVersion = finalUrl.split('/').pop()?.replace('v', '') || '';
+        if (!response.ok) {
+          throw new Error('Failed to fetch latest version');
+        }
+        
+        const data = await response.json();
+        const latestVersion = data.tag_name.replace('v', '');
         
         const current = APP_VERSION.split('.').map(Number);
         const latest = latestVersion.split('.').map(Number);
@@ -47,6 +49,7 @@ export function useVersionCheck(): VersionStatus {
           tooltip: 'You are up to date!'
         });
       } catch (error) {
+        console.error('Version check error:', error);
         setStatus({
           emoji: '⚠️',
           tooltip: 'Failed to check version'
