@@ -1,4 +1,4 @@
-# Gallery 🖼️
+# 🖼️ Gallery 
 
 A visual showcase of Trackly's interface in both dark and light themes.
 ## Dark Theme
