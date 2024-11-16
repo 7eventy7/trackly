@@ -20,6 +20,8 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
+export const APP_VERSION = '1.1.0';
+
 function getOnlineFallbackImage(artistName: string): string {
   const searchQuery = encodeURIComponent(artistName.replace(/[^\w\s]/gi, ''));
   return `https://source.unsplash.com/400x400/?musician,${searchQuery}`;

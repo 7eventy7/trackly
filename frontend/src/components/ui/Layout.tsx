@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Album, Grid, Settings as SettingsIcon, Moon, Sun } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { APP_VERSION } from "../../lib/utils/config";
 
 interface LayoutProps {
   children: ReactNode;
@@ -39,9 +40,12 @@ export function Layout({ children, theme, onThemeToggle, headerExtra }: LayoutPr
   return (
     <div className="flex min-h-screen">
       <aside className="fixed bottom-0 left-0 top-0 z-20 w-64 border-r bg-card px-3 py-4 lg:relative">
-        <div className="mb-8 flex items-center gap-2 px-3">
-          <img src="/icons/trackly.png" alt="Trackly" className="h-8 w-8" />
-          <span className="text-xl font-bold text-primary">Trackly</span>
+        <div className="mb-8 flex flex-col px-3">
+          <div className="flex items-center gap-2">
+            <img src="/icons/trackly.png" alt="Trackly" className="h-8 w-8" />
+            <span className="text-xl font-bold text-primary">Trackly</span>
+          </div>
+          <span className="mt-1 text-xs text-muted-foreground">ver {APP_VERSION}</span>
         </div>
 
         <nav className="space-y-1">
