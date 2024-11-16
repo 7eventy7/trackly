@@ -56,7 +56,6 @@ def check_year_change() -> None:
     current_year = datetime.now().year
     ensure_notified_file(current_year)
 
-# 1. Environment Setup Functions
 def ensure_config_directory() -> None:
     """Ensure data directory exists and has proper permissions"""
     try:
@@ -103,7 +102,6 @@ def load_config() -> Tuple[str, str, str, Optional[str], bool]:
         notify_on_scan
     )
 
-# 2. Startup Check & Notification Functions
 def is_first_startup() -> bool:
     """Check if this is the first time the container is starting"""
     startup_data = safe_read_json(STARTUP_FILE_PATH)
@@ -143,7 +141,6 @@ def send_startup_notification(webhook_url: str, discord_role: Optional[str]) -> 
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send startup notification: {str(e)}")
 
-# 3. Artists File Check Functions
 def safe_read_json(file_path: str) -> Optional[Dict[str, Any]]:
     """Safely read and parse a JSON file with proper error handling"""
     try:
@@ -186,7 +183,6 @@ def artists_file_exists() -> bool:
     """Check if artists.json exists"""
     return os.path.exists(ARTISTS_FILE_PATH)
 
-# 4. MusicBrainz API Query Functions
 class RateLimiter:
     def __init__(self, min_delay: float = 1.0, max_delay: float = 2.0):
         self.min_delay: float = min_delay
@@ -311,7 +307,6 @@ def update_artist_list() -> bool:
         logger.error(f"Error updating artist list: {str(e)}")
         return False
 
-# 5. Validation Functions
 def is_valid_artists_file() -> bool:
     """Check if artists.json contains valid data"""
     data = safe_read_json(ARTISTS_FILE_PATH)
@@ -343,7 +338,6 @@ def is_valid_artists_file() -> bool:
         logger.error(f"Error validating artists.json: {str(e)}")
         return False
 
-# 6. Scheduled Scan Functions
 def format_release_date(date_str: str) -> str:
     """Format release date to a more readable format"""
     try:
@@ -537,6 +531,23 @@ def check_new_releases(notify_on_scan: bool = False) -> None:
     
     logger.info("Completed the scheduled scan")
 
+def should_perform_release_scan(initial_scan: bool) -> bool:
+    """
+    Determine if a release scan should be performed based on the existence of notified_<year>.json
+    """
+    current_year = datetime.now().year
+    notified_file_path = get_notified_file_path(current_year)
+    
+    if initial_scan:
+        logger.info("Checking if release scan is needed during initial scan...")
+        if not os.path.exists(notified_file_path):
+            logger.info(f"notified_{current_year}.json not found during initial scan - will perform release scan")
+            return True
+        else:
+            logger.info(f"notified_{current_year}.json exists during initial scan - skipping release scan")
+            return False
+    return True
+
 def main() -> None:
     """Main function to run the artist tracker"""
     logger.info("Starting Trackly...")
@@ -547,40 +558,38 @@ def main() -> None:
         music_path, cron_schedule, webhook_url, discord_role, notify_on_scan = load_config()
         
         # 2. Startup Check & Notification
-        if is_first_startup():
+        initial_scan = is_first_startup()
+        if initial_scan:
             send_startup_notification(webhook_url, discord_role)
             mark_startup_complete()
         
-        # 3. Artists File Check & 4. MusicBrainz API Queries
-        initial_scan_needed = False
+        # 3. Artists File Check & Initial Setup
+        artists_update_needed = False
         if not artists_file_exists():
             logger.info("artists.json not found, performing initial scan...")
-            initial_scan_needed = True
+            artists_update_needed = True
             if not update_artist_list():
                 raise RuntimeError("Failed to perform initial artist list update")
         elif not is_valid_artists_file():
             logger.info("artists.json exists but is invalid, updating it...")
-            initial_scan_needed = True
+            artists_update_needed = True
             if not update_artist_list():
                 raise RuntimeError("Failed to update artists.json")
         else:
             logger.info("Valid artists.json found, proceeding with normal operation")
         
-        # Check if notified_<year>.json exists and perform release scan accordingly
-        current_year = datetime.now().year
-        notified_file_path = get_notified_file_path(current_year)
-        
-        if initial_scan_needed:
-            if not os.path.exists(notified_file_path):
-                logger.info("Notified file not found during initial scan, performing release scan...")
+        # 4. Determine if release scan should be performed
+        if artists_update_needed:
+            if should_perform_release_scan(True):
+                logger.info("Performing initial release scan...")
                 check_new_releases(notify_on_scan)
                 ensure_notified_file()  # Create the file after the scan
             else:
-                logger.info("Notified file exists during initial scan, skipping release scan...")
+                logger.info("Skipping initial release scan as notified file exists")
         
         logger.info("Trackly startup complete - configuration validated")
         
-        # 6. Start Scheduled Scan
+        # 5. Start Scheduled Scan
         cron = croniter(cron_schedule, datetime.now())
         
         while True:
@@ -592,6 +601,7 @@ def main() -> None:
                 logger.info(f"Sleeping until next scheduled run at {next_run}")
                 time.sleep(sleep_seconds)
             
+            # Regular scheduled scans always perform release check
             check_new_releases(notify_on_scan)
             
     except Exception as e:
