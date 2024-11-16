@@ -5,7 +5,6 @@ on:
     types: [published]
   push:
     branches: [ "main" ]
-    tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
 
@@ -45,10 +44,10 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
             type=raw,value={{tag}},enable=${{ github.event_name == 'release' }}
-            type=sha
+            type=sha,enable=${{ github.event_name != 'release' }}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
