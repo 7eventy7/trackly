@@ -57,6 +57,7 @@ buffer-size = 32768\n\
 harakiri = 120\n\
 max-requests = 1000\n\
 pythonpath = /app\n\
+disable-logging = true\n\
 ' > /app/uwsgi.ini
 
 # Create entrypoint script
@@ -69,8 +70,8 @@ chmod -R 755 /data /app/static\n\
 # Start Nginx\n\
 nginx\n\
 \n\
-# Start uWSGI as myuser with quiet option to silence uWSGI logs\n\
-exec su -s /bin/sh myuser -c "uwsgi --ini /app/uwsgi.ini --quiet"\n\
+# Start uWSGI as myuser\n\
+exec su -s /bin/sh myuser -c "uwsgi --ini /app/uwsgi.ini"\n\
 ' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Set essential system environment variables
