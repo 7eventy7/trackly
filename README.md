@@ -2,14 +2,14 @@
 
 # <img src="frontend/public/icons/trackly.png" width="32" height="32" alt="Trackly Icon"> Trackly
 
-### Music Release Tracker for Discord
+### A web-based interface for tracking music releases.
 
 [![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly.svg?style=social&label=Star&maxAge=2592000)](https://github.com/7eventy7/trackly/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/issues)
 [![Docker Pulls](https://img.shields.io/docker/pulls/7eventy7/trackly.svg)](https://hub.docker.com/r/7eventy7/trackly)
 [![License](https://img.shields.io/github/license/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/blob/main/LICENSE)
 
-A powerful python application that monitors your music library and notifies you about new album releases from your favorite artists through discord. Stay updated with the latest releases from artists in your collection.
+A modern web application designed to enhance your Jellyfin music library experience. Browse your collection with a beautiful interface and optionally receive Discord notifications for new releases from your favorite artists.
 
 </div>
 
@@ -17,14 +17,42 @@ A powerful python application that monitors your music library and notifies you 
 
 ## ✨ Features
 
-- **🎵 Automatic Artist Tracking**: Automatically tracks artists from your music directory
-- **🔍 MusicBrainz Integration**: Uses MusicBrainz API for accurate release information
-- **📢 Discord Notifications**: Get notified about new releases through Discord webhooks
-- **🎨 Unique Artist Colors**: Each artist gets their own vibrant color for easy identification
-- **⏱️ Smart Rate Limiting**: Built-in rate limiting for API requests
+- **🌐 Modern Web Interface**: Browse your music collection with a sleek, responsive UI
+- **🎵 Jellyfin Integration**: Works seamlessly with your existing Jellyfin music library
+- **🎨 Artist Visualization**: Beautiful artist pages with backdrop images and album covers
+- **🔍 Smart Filtering**: Filter releases by year and other metadata
+- **📢 Discord Integration**: Get notified about new releases through Discord webhooks
 - **🔄 Automatic Updates**: Regular checks for new releases with configurable intervals
-- **📅 Year-Based Reset**: Notification history automatically resets each year
 - **🐳 Docker Support**: Easy deployment with Docker and Docker Compose
+
+## 📁 Required Folder Structure
+
+Trackly is designed to work with Jellyfin's music library organization. The backdrop and cover are required for the web interface. Your music folder must follow this structure:
+
+```
+/music/
+├── Artist1/
+│   ├── backdrop.png
+│   ├── cover.png
+│   ├── Album1/
+│   │   └── music files...
+│   └── Album2/
+│       └── music files...
+└── Artist2/
+    ├── backdrop.png
+    ├── cover.png
+    ├── Album1/
+    │   └── music files...
+    └── Album2/
+        └── music files...
+```
+
+### Important Notes:
+- Each artist must have their own folder
+- Artist folders must contain a `backdrop.png` for artist visualization
+- Artist folders must contain a `cover.png` for artist artwork
+- Each album must be in its own folder within the artist's folder
+- This structure is required for proper integration with both Jellyfin and Trackly
 
 ## 🚀 Getting Started
 
@@ -39,7 +67,7 @@ cd trackly
 2. Configure your environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your Discord webhook URL and settings
+# Edit .env with your settings
 ```
 
 3. Start the application:
@@ -50,49 +78,35 @@ docker-compose up -d
 ## ⚙️ Configuration
 
 ### Environment Variables
-- `UPDATE_INTERVAL`: Cron schedule to check for releases (required)
-- `DISCORD_WEBHOOK`: Your Discord webhook URL (required)
+- `UPDATE_INTERVAL`: Cron schedule for checking new releases (required)
+- `DISCORD_WEBHOOK`: Discord webhook URL for notifications (optional)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
-
+- `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (optional)
 
 ### Volumes
-- `/music`: Mount your music directory here
+- `/music`: Mount your Jellyfin music directory here
 - `/data`: Persistent storage for application data
 
 ## 🛠️ Technical Stack
 
+- React + Vite
+- Tailwind CSS
 - Python 3
 - MusicBrainz API
-- Discord Webhooks
 - Docker
-- Schedule
-- Requests
-- Logging
-- JSON
+- Discord Webhooks (Optional)
 
 ## 👥 Contributing
 
-We love your input! We want to make contributing to Trackly as easy and transparent as possible, whether it's:
+We welcome contributions! Whether it's:
 
-- 💡 Suggesting new features
-- 🐛 Reporting a bug
+- 🐛 Reporting bugs
+- 💡 Suggesting features
 - 📝 Improving documentation
-- 🔍 Submitting bug fixes
-- ✨ Proposing new features
+- 🔍 Submitting fixes
+- ✨ Adding new features
 
-### Feature Requests
-
-We're always looking for ways to make Trackly better! If you have an idea for a new feature:
-
-1. Check the [GitHub Issues](https://github.com/7eventy7/trackly/issues) to see if it's already been suggested
-2. If not, create a new issue with the label `feature request`
-3. Describe your feature idea in detail:
-   - What problem does it solve?
-   - How would it work?
-   - Any technical considerations?
-4. Engage with the community in the discussion
-
-Your feature requests help shape the future of Trackly. No suggestion is too small - we appreciate all input!
+Please check our [GitHub Issues](https://github.com/7eventy7/trackly/issues) before submitting new ones.
 
 ## 📝 License
 
