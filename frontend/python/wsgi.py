@@ -31,7 +31,10 @@ def create_app():
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_spa(path):
-        if os.path.exists(os.path.join(app.static_folder, path)):
+        fullpath = os.path.normpath(os.path.join(app.static_folder, path))
+        if not fullpath.startswith(app.static_folder):
+            raise Exception("not allowed")
+        if os.path.exists(fullpath):
             return send_from_directory(app.static_folder, path)
         return send_from_directory(app.static_folder, "index.html")
 
