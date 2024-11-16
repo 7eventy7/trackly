@@ -50,5 +50,5 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: "dark",
-  itemsPerRow: 9,
+  itemsPerRow: 8,
 };
