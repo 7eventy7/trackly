@@ -29,28 +29,58 @@ export function ReleaseFilter({ value, onChange, className }: {
     async function checkAvailableYears() {
       try {
         setLoading(true);
-        const currentYear = new Date().getFullYear();
-        const startYear = 2020; // We can adjust this based on the earliest year needed
         const years: number[] = [];
+        const yearChecks: Promise<void>[] = [];
         
-        // Check all years from startYear to currentYear
-        const yearChecks = [];
-        for (let year = startYear; year <= currentYear; year++) {
-          yearChecks.push(
-            fetch(`/data/notified_${year}.json`)
-              .then(response => {
-                if (response.ok) {
-                  years.push(year);
-                }
-              })
-              .catch(() => {
-                // Silently ignore missing year files
-              })
-          );
+        // First, check if any files exist
+        const checkYear = async (year: number) => {
+          try {
+            const response = await fetch(`/data/notified_${year}.json`);
+            if (response.ok) {
+              years.push(year);
+            }
+          } catch {
+            // Silently ignore missing year files
+          }
+        };
+
+        // Start with current year and check both future and past years
+        const currentYear = new Date().getFullYear();
+        const futureYears = 10; // Look 10 years into the future
+        const pastYears = 10;   // Look 10 years into the past
+
+        // Check future years (including current)
+        for (let year = currentYear; year <= currentYear + futureYears; year++) {
+          yearChecks.push(checkYear(year));
         }
-        
+
+        // Check past years
+        for (let year = currentYear - 1; year >= currentYear - pastYears; year--) {
+          yearChecks.push(checkYear(year));
+        }
+
         // Wait for all year checks to complete
         await Promise.all(yearChecks);
+
+        // If we found any years in either direction, expand the search
+        if (years.length > 0) {
+          const minYear = Math.min(...years);
+          const maxYear = Math.max(...years);
+
+          // Check years before the earliest found year
+          const earlierChecks = [];
+          for (let year = minYear - 1; year >= minYear - 5; year--) {
+            earlierChecks.push(checkYear(year));
+          }
+
+          // Check years after the latest found year
+          const laterChecks = [];
+          for (let year = maxYear + 1; year <= maxYear + 5; year++) {
+            laterChecks.push(checkYear(year));
+          }
+
+          await Promise.all([...earlierChecks, ...laterChecks]);
+        }
         
         // Sort years in descending order (newest first)
         setAvailableYears(years.sort((a, b) => b - a));

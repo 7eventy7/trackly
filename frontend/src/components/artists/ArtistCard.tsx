@@ -30,10 +30,6 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
     paddingBottom: '2rem' // Increased padding to move name down
   };
 
-  const borderStyle: CSSProperties = {
-    borderColor: colorHex // Using the full color instead of semi-transparent
-  };
-
   const handleImageError = () => {
     if (!localImageError) {
       // First error - try fallback image
@@ -48,11 +44,12 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
     <Link
       to={`/artists/${encodeURIComponent(name)}`}
       className={cn(
-        "group relative block overflow-hidden rounded-lg bg-card transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "group relative block rounded-lg bg-card transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 border-4",
         className
       )}
+      style={{ borderColor: colorHex }}
     >
-      <div className="aspect-square w-full overflow-hidden">
+      <div className="aspect-square w-full overflow-hidden rounded-lg">
         <img
           src={imageSrc}
           alt={`${name}'s cover`}
@@ -68,10 +65,6 @@ export function ArtistCard({ name, coverImage, fallbackImage, className, color }
           {name}
         </h3>
       </div>
-      <div 
-        className="absolute inset-0 rounded-lg border-2"
-        style={borderStyle}
-      />
     </Link>
   );
 }

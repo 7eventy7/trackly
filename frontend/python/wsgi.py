@@ -1,8 +1,15 @@
-from flask import Flask, send_from_directory
+import sys
 import os
+from flask import Flask, send_from_directory
 from python.main import main as tracker_main, DATA_DIR, MUSIC_DIR
 import threading
 import multiprocessing
+
+# Silence uWSGI logs by redirecting stdout and stderr to /dev/null
+if not sys.warnoptions:
+    devnull = open(os.devnull, 'w')
+    sys.stdout = devnull
+    sys.stderr = devnull
 
 # Use a shared value to track if the tracker has been started
 tracker_started = multiprocessing.Value('i', 0)

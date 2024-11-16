@@ -47,22 +47,27 @@ export function ArtistDetail({
 
   return (
     <div className="min-h-screen">
-      <div className="relative mx-auto h-[350px] overflow-hidden rounded-lg" style={{ aspectRatio: '16/9', maxWidth: '622px' }}>
-        <img
-          src={backdropSrc}
-          alt={`${artist.name}'s backdrop`}
-          onError={() => setBackdropError(true)}
-          className="h-full w-full object-cover"
-        />
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(to bottom, transparent 50%, var(--background) 100%),
-                        linear-gradient(to right, var(--background) 0%, transparent 15%),
-                        linear-gradient(to left, var(--background) 0%, transparent 15%)`
-          }}
-        />
-        
+      {/* Backdrop Container - Modified to handle overflow properly */}
+      <div className="relative mx-auto" style={{ maxWidth: '622px' }}>
+        {/* Backdrop Image Container */}
+        <div className="h-[350px] overflow-hidden rounded-lg">
+          <img
+            src={backdropSrc}
+            alt={`${artist.name}'s backdrop`}
+            onError={() => setBackdropError(true)}
+            className="h-full w-full object-cover"
+          />
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom, transparent 50%, var(--background) 100%),
+                          linear-gradient(to right, var(--background) 0%, transparent 15%),
+                          linear-gradient(to left, var(--background) 0%, transparent 15%)`
+            }}
+          />
+        </div>
+
+        {/* Navigation and Year Selection - Adjusted positioning */}
         <div className="absolute left-4 top-4">
           <Link
             to="/artists"
@@ -98,9 +103,10 @@ export function ArtistDetail({
           </DropdownMenu.Root>
         </div>
 
-        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+        {/* Profile Picture Container - Improved positioning */}
+        <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-64px' }}>
           <div 
-            className="relative h-32 w-32 overflow-hidden rounded-full border-4"
+            className="relative h-32 w-32 overflow-hidden rounded-full border-4 shadow-lg"
             style={{ borderColor: colorHex }}
           >
             <img
@@ -113,7 +119,8 @@ export function ArtistDetail({
         </div>
       </div>
 
-      <div className="mt-16 text-center">
+      {/* Content Section - Adjusted spacing to accommodate profile picture */}
+      <div className="mt-24 text-center">
         <h1 className="text-3xl font-bold">{artist.name}</h1>
       </div>
 
