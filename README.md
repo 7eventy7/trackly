@@ -4,7 +4,6 @@
 
 ### Web App For Tracking Music Releases From Artists
 
-[![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly)](https://github.com/7eventy7/trackly/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/issues)
 [![Docker Pulls](https://img.shields.io/docker/pulls/7eventy7/trackly.svg)](https://hub.docker.com/r/7eventy7/trackly)
 [![License](https://img.shields.io/github/license/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/blob/main/LICENSE)
@@ -80,10 +79,10 @@ docker-compose up -d
 ### Environment Variables
 These can be configured in the docker-compose.yml file:
 - `UPDATE_INTERVAL`: Cron schedule for checking new releases (default: "0 0 * * *")
+- `DISCORD_NOTIFY`: Enable/disable Discord notifications during scan (default: true)
+- `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (default: false)
 - `DISCORD_WEBHOOK`: Discord webhook URL for notifications (optional)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
-- `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (default: false)
-- `DISCORD_NOTIFY`: Enable/disable Discord notifications during scan (default: true)
 
 ### Volumes
 - `/music`: Mount your Jellyfin music directory here
@@ -113,6 +112,10 @@ Please check our [GitHub Issues](https://github.com/7eventy7/trackly/issues) bef
 ## 📝 License
 
 MIT License - feel free to use this project for any purpose.
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=7eventy7/trackly&type=Date)](https://star-history.com/#7eventy7/trackly&Date)
 
 ---
 
