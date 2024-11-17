@@ -115,7 +115,7 @@ MIT License - feel free to use this project for any purpose.
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=7eventy7/trackly&type=Date)](https://star-history.com/#7eventy7/trackly&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=7eventy7/trackly&type=Date&theme=dark)](https://star-history.com/#7eventy7/trackly&Date)
 
 ---
 
