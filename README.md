@@ -4,7 +4,7 @@
 
 ### Web App For Tracking Music Releases From Artists
 
-[![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly.svg?style=social&label=Star&maxAge=2592000)](https://github.com/7eventy7/trackly/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/7eventy7/trackly)](https://github.com/7eventy7/trackly/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/issues)
 [![Docker Pulls](https://img.shields.io/docker/pulls/7eventy7/trackly.svg)](https://hub.docker.com/r/7eventy7/trackly)
 [![License](https://img.shields.io/github/license/7eventy7/trackly.svg)](https://github.com/7eventy7/trackly/blob/main/LICENSE)
