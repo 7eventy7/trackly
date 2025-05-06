@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import logging
 import random
 import colorsys
+import glob
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from croniter import croniter, CroniterNotAlphaError, CroniterBadCronError
@@ -254,23 +255,54 @@ def generate_vibrant_color() -> int:
     rgb = colorsys.hsv_to_rgb(hue, saturation, value)
     return int(rgb[0] * 255) << 16 | int(rgb[1] * 255) << 8 | int(rgb[2] * 255)
 
+def find_image(artist_path: str, base_name: str, extensions: List[str]) -> Optional[str]:
+    for ext in extensions:
+        for case in [ext.lower(), ext.upper()]:
+            path = os.path.join(artist_path, f'{base_name}{case}')
+            if os.path.exists(path):
+                return path
+    return None
+
 def update_artist_list() -> bool:
     logger.info("Updating artist list...")
     rate_limiter = RateLimiter()
-    
+
     try:
         artists = []
+        image_extensions = ['.png', '.jpg', '.jpeg', '.webp']  # Supported image formats
         for artist_name in [d for d in os.listdir(MUSIC_DIR) 
                           if os.path.isdir(os.path.join(MUSIC_DIR, d))]:
+            artist_path = os.path.join(MUSIC_DIR, artist_name)
+            backdrop = None
+            cover = None
+            # Check for backdrop with pattern backdrop*.{ext}
+            for ext in image_extensions:
+                backdrop_matches = glob.glob(os.path.join(artist_path, f'backdrop*{ext}'))
+                if backdrop_matches:
+                    backdrop = backdrop_matches[0]  # Use the first match
+                    break
+            # Check for cover, prioritizing 'cover' but falling back to 'folder'
+            for ext in image_extensions:
+                cover_path = os.path.join(artist_path, f'cover{ext}')
+                folder_path = os.path.join(artist_path, f'folder{ext}')
+                if cover is None and os.path.exists(cover_path):
+                    cover = cover_path
+                elif cover is None and os.path.exists(folder_path):
+                    cover = folder_path
+            # Include artist regardless of images
             artist_id = get_artist_id(artist_name, rate_limiter)
             artists.append({
                 'name': artist_name,
                 'id': artist_id,
-                'color': generate_vibrant_color()
+                'color': generate_vibrant_color(),
+                'backdrop': backdrop,
+                'cover': cover
             })
             if not artist_id:
                 logger.warning(f"Could not find MusicBrainz ID for {artist_name}")
-        
+            if not backdrop or not cover:
+                logger.info(f"Including {artist_name} with missing images: backdrop={backdrop}, cover={cover}")
+
         logger.info(f"Found {len(artists)} artists in music directory")
         
         return safe_write_json(ARTISTS_FILE_PATH, {
