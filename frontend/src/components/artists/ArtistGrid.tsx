@@ -42,7 +42,7 @@ export function ArtistGrid({
           <ArtistCard
             key={artist.name}
             name={artist.name}
-            cover={artist.cover}
+            cover={artist.cover || '/icons/trackly.png'}
             color={artist.color}
           />
         ))}
