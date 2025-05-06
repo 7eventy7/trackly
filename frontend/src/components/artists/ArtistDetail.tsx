@@ -45,7 +45,7 @@ export function ArtistDetail({
       <div className="relative mx-auto" style={{ maxWidth: '622px' }}>
         <div className="h-[350px] overflow-hidden rounded-lg">
           <img
-            src={artist.backdrop || '/icons/trackly.png'}
+            src={artist.backdrop || '/icons/fallback_backdrop.jpg'}
             alt={`${artist.name}'s backdrop`}
             className="h-full w-full object-cover"
           />
