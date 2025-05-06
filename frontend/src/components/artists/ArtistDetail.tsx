@@ -24,10 +24,16 @@ export function ArtistDetail({
   const [backdropError, setBackdropError] = useState(false);
   const [coverError, setCoverError] = useState(false);
 
-  const backdropSrc = backdropError ? FALLBACK_BACKDROP : `/music/${encodeURIComponent(artist.name)}/backdrop.png`;
-  const coverSrc = coverError 
+  // Handle backdrop: use artist.backdrop, fallback to placeholder if null or error
+  const backdropSrc = backdropError || !artist.backdrop
+    ? FALLBACK_BACKDROP
+    : artist.backdrop;
+
+  // Handle cover: use artist.cover, fallback to fallbackImage or trackly.png if null or error
+  const coverSrc = coverError || !artist.cover
     ? (artist.fallbackImage || '/icons/trackly.png')
-    : `/music/${encodeURIComponent(artist.name)}/cover.png`;
+    : artist.cover;
+  
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
   const filteredReleases = useMemo(() => {
