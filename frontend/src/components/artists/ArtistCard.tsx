@@ -4,8 +4,7 @@ import { cn } from "../../lib/utils";
 
 interface ArtistCardProps {
   name: string;
-  cover: string; // Renamed from coverImage
-  fallbackImage?: string;
+  cover: string;
   className?: string;
   color?: number;
 }
@@ -14,13 +13,10 @@ function numberToHex(num: number): string {
   return `#${num.toString(16).padStart(6, '0')}`;
 }
 
-export function ArtistCard({ name, cover, fallbackImage, className, color }: ArtistCardProps) {
-  const [localImageError, setLocalImageError] = useState(false);
-  const [fallbackImageError, setFallbackImageError] = useState(false);
+export function ArtistCard({ name, cover, className, color }: ArtistCardProps) {
+  const [imageError, setImageError] = useState(false);
 
-  const imageSrc = localImageError 
-    ? (fallbackImage && !fallbackImageError ? fallbackImage : '/icons/trackly.png')
-    : cover; // Use dynamic cover path
+  const imageSrc = imageError || !cover ? '/icons/trackly.png' : cover;
 
   const colorHex = color ? numberToHex(color) : '#000000';
   
@@ -28,14 +24,6 @@ export function ArtistCard({ name, cover, fallbackImage, className, color }: Art
     background: `linear-gradient(to top, ${colorHex}ff, ${colorHex}00 70%)`,
     transition: 'background 0.3s ease-in-out',
     paddingBottom: '0.75rem'
-  };
-
-  const handleImageError = () => {
-    if (!localImageError) {
-      setLocalImageError(true);
-    } else if (!fallbackImageError && fallbackImage) {
-      setFallbackImageError(true);
-    }
   };
 
   return (
@@ -51,7 +39,7 @@ export function ArtistCard({ name, cover, fallbackImage, className, color }: Art
         <img
           src={imageSrc}
           alt={`${name}'s cover`}
-          onError={handleImageError}
+          onError={() => setImageError(true)}
           className="h-full w-full object-cover transition-transform duration-300"
         />
       </div>
