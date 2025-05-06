@@ -22,7 +22,7 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
-export const APP_VERSION = '1.1.0.3';
+export const APP_VERSION = '1.1.0.4';
 
 async function findAvailableYears(): Promise<number[]> {
   const years: number[] = [];
