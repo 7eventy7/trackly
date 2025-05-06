@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 
 interface ArtistCardProps {
   name: string;
-  coverImage: string;
+  cover: string; // Renamed from coverImage
   fallbackImage?: string;
   className?: string;
   color?: number;
@@ -14,16 +14,16 @@ function numberToHex(num: number): string {
   return `#${num.toString(16).padStart(6, '0')}`;
 }
 
-export function ArtistCard({ name, coverImage, fallbackImage, className, color }: ArtistCardProps) {
+export function ArtistCard({ name, cover, fallbackImage, className, color }: ArtistCardProps) {
   const [localImageError, setLocalImageError] = useState(false);
   const [fallbackImageError, setFallbackImageError] = useState(false);
 
   const imageSrc = localImageError 
     ? (fallbackImage && !fallbackImageError ? fallbackImage : '/icons/trackly.png')
-    : `/music/${encodeURIComponent(name)}/cover.png`;
+    : cover; // Use dynamic cover path
 
   const colorHex = color ? numberToHex(color) : '#000000';
-
+  
   const gradientStyle: CSSProperties = {
     background: `linear-gradient(to top, ${colorHex}ff, ${colorHex}00 70%)`,
     transition: 'background 0.3s ease-in-out',
