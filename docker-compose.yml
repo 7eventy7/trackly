@@ -3,21 +3,21 @@ version: '3.8'
 
 services:
   trackly:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: 7eventy7/trackly
     ports:
       - "11888:11888"  # Main application port
     volumes:
-      - /home/long/usb/media/music:/music:ro  # Read-only mount of music directory
-      - /home/long/usb/media/trackly/data:/data  # Persistent storage directory
+      - ${MUSIC_PATH:-./music}:/music:ro  # Read-only mount of music directory
+      - ${DATA_PATH:-./data}:/data  # Persistent storage directory
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro  # Mount nginx configuration
     environment:
       - UPDATE_INTERVAL=0 0 * * *  # Set this to your desired cron schedule
-      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/dummy # Dummy webhook
+      - DISCORD_WEBHOOK=  # Set this to your discord webhook url for embeds
+      - DISCORD_ROLE=  # Set this to your discord role id number to ping
       - NOTIFY_ON_SCAN=false  # Set to receive notifications for each scan completion
-      - DISCORD_NOTIFY=false  # Set to false to disable discord notifications during scan
+      - DISCORD_NOTIFY=true  # Set to false to disable discord notifications during scan
     restart: unless-stopped
-    container_name: trackly-test
+    container_name: trackly
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11888/"]
       interval: 30s
