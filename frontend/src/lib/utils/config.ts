@@ -2,6 +2,8 @@ interface ConfigArtist {
   name: string;
   id: string;
   color: number;
+  backdrop?: string; // Added
+  cover?: string;   // Added
 }
 
 interface ArtistsConfig {
@@ -20,7 +22,7 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.1.0.1';
 
 function getOnlineFallbackImage(artistName: string): string {
   const searchQuery = encodeURIComponent(artistName.replace(/[^\w\s]/gi, ''));
@@ -106,8 +108,8 @@ export async function loadArtistsConfig() {
     
     return data.artists.map(artist => ({
       name: artist.name,
-      coverImage: `/music/${artist.name}/backdrop.png`,
-      backdropImage: `/music/${artist.name}/backdrop.png`,
+      cover: artist.cover || `/music/${encodeURIComponent(artist.name)}/cover.png`, // Use dynamic cover
+      backdrop: artist.backdrop || `/music/${encodeURIComponent(artist.name)}/backdrop.png`, // Use dynamic backdrop
       fallbackImage: getOnlineFallbackImage(artist.name),
       color: artist.color,
       releases: allReleases
