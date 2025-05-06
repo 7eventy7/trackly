@@ -26,27 +26,25 @@ A modern web application designed to enhance your Jellyfin music library experie
 - **🔄 Automatic Updates**: Regular checks for new releases with configurable intervals
 - **🐳 Docker Support**: Easy deployment with Docker and Docker Compose
 - **💪 Multi-Architecture**: Supports both AMD64 and ARM64 architectures (including Raspberry Pi)
-
 ## 📁 Required Folder Structure
 
-Trackly is designed to work with Jellyfin's music library organization. The backdrop and cover are required for the web interface. Your music folder must follow this structure:
+Trackly is designed to work with Jellyfin's music library organization. The backdrop and cover/folder images are used for the web interface and can be in PNG, JPG, JPEG,or WebP format. Your music folder must follow this structure:
 
 > **Note**: Image dimension specifications
-> - backdrop.png should be 16:9 aspect ratio
-> - cover.png should be 1:1 aspect ratio (square)
-
+> - backdrop.<ext> should be 16:9 aspect ratio
+> - cover.<ext> or folder.<ext> should be 1:1 aspect ratio (square)
 ```
 /music/
 ├── Artist1/
-│   ├── backdrop.png
-│   ├── cover.png
+│   ├── backdrop.png #or .jpg, .jpeg, .webp
+│   ├── cover.png #or .jpg, .jpeg, .webp
 │   ├── Album1/
 │   │   └── music files...
 │   └── Album2/
 │       └── music files...
 └── Artist2/
-    ├── backdrop.png
-    ├── cover.png
+    ├── backdrop.png #or .jpg, .jpeg, .webp
+    ├── folder.png #or .jpg, .jpeg, .webp
     ├── Album1/
     │   └── music files...
     └── Album2/
