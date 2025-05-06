@@ -29,8 +29,8 @@ export const FALLBACK_BACKDROP = "/placeholder-backdrop.jpg";
 
 export interface Artist {
   name: string;
-  coverImage: string;
-  backdropImage: string;
+  cover?: string; // Changed from coverImage
+  backdrop?: string; // Changed from backdropImage
   fallbackImage?: string;
   releases: Release[];
   color: number;
