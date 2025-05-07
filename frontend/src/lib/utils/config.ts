@@ -22,7 +22,7 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
-export const APP_VERSION = '1.1.0.4';
+export const APP_VERSION = '1.1.0.5';
 
 async function findAvailableYears(): Promise<number[]> {
   const years: number[] = [];
@@ -35,13 +35,10 @@ async function findAvailableYears(): Promise<number[]> {
       if (response.ok) {
         years.push(year);
       }
-    } catch {
-      // Silently skip errors
-    }
+    } catch {}
   };
 
-  // Check current year and ±5 years
-  for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+  for (let year = currentYear; year <= currentYear + 10; year++) {
     checkPromises.push(checkYear(year));
   }
 
