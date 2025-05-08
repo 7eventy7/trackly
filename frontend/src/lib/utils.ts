@@ -25,12 +25,10 @@ export function calculateGridColumns(itemsPerRow: number): string {
   return `repeat(${Math.max(4, Math.min(16, itemsPerRow))}, minmax(0, 1fr))`;
 }
 
-export const FALLBACK_BACKDROP = "/placeholder-backdrop.jpg";
-
 export interface Artist {
   name: string;
-  coverImage: string;
-  backdropImage: string;
+  cover?: string;
+  backdrop?: string;
   fallbackImage?: string;
   releases: Release[];
   color: number;

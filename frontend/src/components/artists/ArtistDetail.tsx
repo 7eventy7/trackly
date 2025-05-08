@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { Artist, FALLBACK_BACKDROP, formatDate } from "../../lib/utils";
+import { Artist, formatDate } from "../../lib/utils";
 import { YearFilter, FilterPeriod } from "../ui/YearFilter";
 
 interface ArtistDetailProps {
@@ -21,13 +21,6 @@ export function ArtistDetail({
   selectedPeriod,
   onPeriodChange,
 }: ArtistDetailProps) {
-  const [backdropError, setBackdropError] = useState(false);
-  const [coverError, setCoverError] = useState(false);
-
-  const backdropSrc = backdropError ? FALLBACK_BACKDROP : `/music/${encodeURIComponent(artist.name)}/backdrop.png`;
-  const coverSrc = coverError 
-    ? (artist.fallbackImage || '/icons/trackly.png')
-    : `/music/${encodeURIComponent(artist.name)}/cover.png`;
   const colorHex = artist.color ? numberToHex(artist.color) : '#000000';
 
   const filteredReleases = useMemo(() => {
@@ -52,9 +45,8 @@ export function ArtistDetail({
       <div className="relative mx-auto" style={{ maxWidth: '622px' }}>
         <div className="h-[350px] overflow-hidden rounded-lg">
           <img
-            src={backdropSrc}
+            src={artist.backdrop || '/icons/fallback_backdrop.jpg'}
             alt={`${artist.name}'s backdrop`}
-            onError={() => setBackdropError(true)}
             className="h-full w-full object-cover"
           />
           <div 
@@ -92,9 +84,8 @@ export function ArtistDetail({
             style={{ borderColor: colorHex }}
           >
             <img
-              src={coverSrc}
+              src={artist.cover || '/icons/trackly.png'}
               alt={`${artist.name}'s cover`}
-              onError={() => setCoverError(true)}
               className="h-full w-full object-cover"
             />
           </div>

@@ -2,6 +2,8 @@ interface ConfigArtist {
   name: string;
   id: string;
   color: number;
+  backdrop?: string;
+  cover?: string;
 }
 
 interface ArtistsConfig {
@@ -20,12 +22,7 @@ interface NotifiedConfig {
   notified_albums: NotifiedAlbum[];
 }
 
-export const APP_VERSION = '1.1.0';
-
-function getOnlineFallbackImage(artistName: string): string {
-  const searchQuery = encodeURIComponent(artistName.replace(/[^\w\s]/gi, ''));
-  return `https://source.unsplash.com/400x400/?musician,${searchQuery}`;
-}
+export const APP_VERSION = '1.1.0.5';
 
 async function findAvailableYears(): Promise<number[]> {
   const years: number[] = [];
@@ -34,7 +31,7 @@ async function findAvailableYears(): Promise<number[]> {
 
   const checkYear = async (year: number) => {
     try {
-      const response = await fetch(`/data/notified_${year}.json`);
+      const response = await fetch(`/data/notified_${year}.json`, { method: 'HEAD' });
       if (response.ok) {
         years.push(year);
       }
@@ -45,46 +42,20 @@ async function findAvailableYears(): Promise<number[]> {
     checkPromises.push(checkYear(year));
   }
 
-  for (let year = currentYear - 1; year >= currentYear - 10; year--) {
-    checkPromises.push(checkYear(year));
-  }
-
   await Promise.all(checkPromises);
-
-  if (years.length > 0) {
-    const minYear = Math.min(...years);
-    const maxYear = Math.max(...years);
-
-    const additionalChecks: Promise<void>[] = [];
-
-    for (let year = minYear - 1; year >= minYear - 5; year--) {
-      additionalChecks.push(checkYear(year));
-    }
-
-    for (let year = maxYear + 1; year <= maxYear + 5; year++) {
-      additionalChecks.push(checkYear(year));
-    }
-
-    await Promise.all(additionalChecks);
-  }
-
   return years.sort((a, b) => b - a);
 }
 
 async function loadReleasesForYear(year: number): Promise<NotifiedAlbum[]> {
   try {
-    const fileName = `notified_${year}.json`;
-    const response = await fetch(`/data/${fileName}`);
+    const response = await fetch(`/data/notified_${year}.json`);
     if (!response.ok) {
-      if (response.status === 404) {
-        return [];
-      }
-      throw new Error(`Failed to load releases for ${year}`);
+      return [];
     }
     const data: NotifiedConfig = await response.json();
-    return data.notified_albums;
+    return data.notified_albums || [];
   } catch (error) {
-    console.error(`Error loading releases for ${year}:`, error);
+    console.warn(`No releases found for ${year}:`, error);
     return [];
   }
 }
@@ -93,22 +64,21 @@ export async function loadArtistsConfig() {
   try {
     const response = await fetch('/data/artists.json');
     if (!response.ok) {
-      throw new Error('Failed to load artists config');
+      console.error('Failed to load artists.json:', response.status);
+      return [];
     }
     const data: ArtistsConfig = await response.json();
     
     const availableYears = await findAvailableYears();
-    
     const releasePromises = availableYears.map(year => loadReleasesForYear(year));
     const releasesPerYear = await Promise.all(releasePromises);
-    
     const allReleases = releasesPerYear.flat();
     
     return data.artists.map(artist => ({
       name: artist.name,
-      coverImage: `/music/${artist.name}/backdrop.png`,
-      backdropImage: `/music/${artist.name}/backdrop.png`,
-      fallbackImage: getOnlineFallbackImage(artist.name),
+      cover: artist.cover || null,
+      backdrop: artist.backdrop || null,
+      fallbackImage: '/icons/trackly.png',
       color: artist.color,
       releases: allReleases
         .filter(release => release.artist === artist.name)
@@ -130,7 +100,8 @@ export async function loadStartupConfig() {
   try {
     const response = await fetch('/data/startup.json');
     if (!response.ok) {
-      throw new Error('Failed to load startup config');
+      console.error('Failed to load startup.json:', response.status);
+      return { initial_startup_complete: false };
     }
     return await response.json();
   } catch (error) {
