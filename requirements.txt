@@ -1,5 +1,5 @@
 python-dotenv==1.1.0
-requests==2.32.3
+requests==2.32.4
 typing-extensions==4.13.2
 croniter==6.0.0
 flask==3.1.1
