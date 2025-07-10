@@ -79,7 +79,7 @@ These can be configured in the docker-compose.yml file:
 - `UPDATE_INTERVAL`: Cron schedule for checking new releases (default: "0 0 * * *")
 - `DISCORD_NOTIFY`: Enable/disable Discord notifications during scan (default: true)
 - `NOTIFY_ON_SCAN`: Send Discord notification when scan completes (default: false)
-- `DISCORD_WEBHOOK`: Discord webhook URL for notifications (optional)
+- `DISCORD_WEBHOOK`: Discord webhook URL for notifications (required)
 - `DISCORD_ROLE`: Discord role ID to mention in notifications (optional)
 
 ### Volumes
